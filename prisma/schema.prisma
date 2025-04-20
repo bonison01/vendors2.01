@@ -1,0 +1,491 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["multiSchema"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  schemas  = ["public"]
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model businesses {
+  id               Int       @id @default(autoincrement())
+  name             String    @db.VarChar(255)
+  location         String    @db.VarChar(255)
+  establishedYear  Int
+  productOrService String    @db.VarChar(255)
+  contactNumber    String    @db.VarChar(15)
+  website          String?
+  description      String?
+  created_at       DateTime? @default(now()) @db.Timestamp(6)
+  notificationtype String?   @default("email") @db.VarChar(50)
+
+  @@schema("public")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model cid_billing {
+  id               Int       @id @default(autoincrement())
+  date             DateTime  @db.Date
+  submitted_amount Decimal   @db.Decimal
+  team_id          String
+  created_at       DateTime? @default(now()) @db.Timestamp(6)
+
+  @@schema("public")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model commission_payout {
+  id            Int       @id @default(autoincrement())
+  date          DateTime  @db.Date
+  payout_amount Decimal   @db.Decimal
+  team_id       String
+  created_at    DateTime? @default(now()) @db.Timestamp(6)
+
+  @@schema("public")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model customers {
+  customer_id     String            @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name            String            @db.VarChar(255)
+  email           String            @unique(map: "customer_email_key")
+  password        String
+  address         String?           @db.VarChar(255)
+  phone           String?           @db.VarChar(20)
+  profile_pic     String?           @default("")
+  whatsapp        String?           @db.VarChar
+  remarks         String?           @db.VarChar
+  order_record    Json?             @db.Json
+  created_at      DateTime?         @db.Timestamp(6)
+  updated_at      DateTime?         @db.Timestamp(6)
+  token           String            @unique @db.VarChar
+  dob             DateTime?         @db.Date
+  delivery_orders delivery_orders[]
+  order_rec       order_rec[]
+  ratings         ratings[]
+
+  @@schema("public")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model deliveries {
+  id              Int       @id @default(autoincrement())
+  pickup_name     String?
+  pickup_phone    String?
+  pickup_address  String?
+  drop_name       String?
+  drop_phone      String?
+  drop_address    String?
+  origin          String?
+  destination     String?
+  distance        String?
+  delivery_charge String?
+  created_at      DateTime? @default(now()) @db.Timestamp(6)
+  order_id        String?   @unique
+  status          String?   @default("pending")
+
+  @@schema("public")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model delivery_orders {
+  id              Int        @id @default(autoincrement())
+  pickup_name     String
+  pickup_phone    String
+  pickup_address  String
+  dropoff_name    String
+  dropoff_phone   String
+  dropoff_address String
+  instructions    Json
+  distance        Decimal?   @db.Decimal(10, 2)
+  charge          Decimal?   @db.Decimal(10, 2)
+  created_at      DateTime?  @default(now()) @db.Timestamp(6)
+  pickup_cord     String?
+  dropoff_cord    String?
+  status          String?    @default("'Pending'::text")
+  updated_at      DateTime?  @db.Timestamp(6)
+  customer_id     String?    @db.Uuid
+  isBusiness      Int?       @db.SmallInt
+  business_id     String?    @db.Uuid
+  users           users?     @relation(fields: [business_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction)
+  customers       customers? @relation(fields: [customer_id], references: [customer_id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@schema("public")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model employees {
+  id         String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name       String       @db.VarChar
+  email      String?      @db.VarChar
+  password   String?      @db.VarChar
+  role       String?      @db.VarChar
+  order_data order_data[]
+
+  @@schema("public")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model job_openings {
+  id              Int       @id @default(autoincrement())
+  name            String    @db.VarChar(255)
+  email           String    @unique @db.VarChar(255)
+  address         String
+  current_address String
+  phone           String    @db.VarChar(20)
+  position        String    @db.VarChar(100)
+  resume_url      String
+  additional_data Json?
+  created_at      DateTime? @default(now()) @db.Timestamp(6)
+  updated_at      DateTime? @default(now()) @db.Timestamp(6)
+
+  @@schema("public")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model message_data {
+  id            Int       @id @default(autoincrement())
+  user_id       String    @db.Uuid
+  name          String
+  address       String
+  mobile_number String
+  message       String
+  created_at    DateTime? @default(now()) @db.Timestamptz(6)
+  email         String?   @db.VarChar(255)
+  order_id      String?
+  status        String?   @default("Pending") @db.VarChar
+  sent_at       DateTime? @db.Timestamptz(6)
+  sender_email  String?
+
+  @@schema("public")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model messages {
+  id                                String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  sender_id                         String?   @db.Uuid
+  receiver_id                       String?   @db.Uuid
+  message_content                   String
+  status                            String?   @db.VarChar(50)
+  read                              Boolean?  @default(false)
+  timestamp                         DateTime? @default(now()) @db.Timestamp(6)
+  users_messages_receiver_idTousers users?    @relation("messages_receiver_idTousers", fields: [receiver_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction)
+  users_messages_sender_idTousers   users?    @relation("messages_sender_idTousers", fields: [sender_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@schema("public")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model new_products {
+  id               Int          @id @default(autoincrement())
+  user_id          String?      @db.Uuid
+  name             String
+  description      String?
+  price_inr        Decimal      @db.Decimal
+  media_urls       String[]
+  category         String?
+  user_name        String?
+  discount_rate    Decimal?     @default(0) @db.Decimal(5, 2)
+  discounted_price Decimal?     @default(0) @db.Decimal(10, 2)
+  quantity         Int?         @db.SmallInt
+  unit             String?
+  unit_quantity    String?
+  updated_at       DateTime?    @db.Timestamp(6)
+  users            users?       @relation(fields: [user_id], references: [user_id], onDelete: Cascade, onUpdate: NoAction)
+  order_item       order_item[]
+
+  @@schema("public")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model order_data {
+  id             Int        @id @default(autoincrement())
+  employee_id    String?    @db.Uuid
+  name           String?
+  email          String?
+  date           DateTime?  @default(now()) @db.Date
+  team           String?
+  pickup_name    String?
+  pickup_address String?
+  pickup_phone   String?
+  drop_name      String?
+  drop_address   String?
+  drop_phone     String?
+  orderType      String?
+  pb             String?
+  dc             String?
+  pbAmt          Decimal?   @db.Decimal(10, 2)
+  dcAmt          Decimal?   @db.Decimal(10, 2)
+  auto_tsb       Decimal?   @db.Decimal(10, 2)
+  auto_cid       Decimal?   @db.Decimal(10, 2)
+  status         String?
+  created_at     DateTime?  @default(now()) @db.Timestamp(6)
+  updated_at     DateTime?  @default(now()) @db.Timestamp(6)
+  vendor         String?    @db.VarChar
+  drop           String?
+  pickup         String?
+  vendor_email   String?
+  cid            Int?
+  tsb            Int?
+  type           String?
+  inv            String?
+  employees      employees? @relation(fields: [employee_id], references: [id], onUpdate: NoAction)
+  users          users?     @relation(fields: [vendor_email], references: [email], onDelete: NoAction, onUpdate: NoAction)
+
+  @@schema("public")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model order_item {
+  id           Int          @id(map: "orders_pkey") @default(autoincrement())
+  product_id   Int
+  product_name String       @db.VarChar(255)
+  quantity     Int          @db.SmallInt
+  order_id     String?
+  added_at     DateTime?    @db.Timestamp(6)
+  order_rec    order_rec?   @relation(fields: [order_id], references: [order_id], onDelete: NoAction, onUpdate: NoAction)
+  new_products new_products @relation(fields: [product_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([order_id, product_id], map: "unique_id")
+  @@schema("public")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model order_rec {
+  id                     Int          @id @default(autoincrement())
+  order_id               String       @unique
+  buyer_name             String
+  buyer_address          String
+  buyer_phone            String
+  email                  String?
+  created_at             DateTime?    @default(now()) @db.Timestamp(6)
+  status                 String?      @default("pending")
+  item_list              Json
+  total_price            Decimal?     @db.Decimal
+  total_calculated_price Decimal?     @db.Decimal(10, 2)
+  item_count             Int?         @db.SmallInt
+  is_ordered             Int?         @db.SmallInt
+  landmark               String?
+  buyer_id               String?      @db.Uuid
+  store_ids              String[]     @db.Uuid
+  order_at               DateTime?    @db.Timestamp(6)
+  order_item             order_item[]
+  customers              customers?   @relation(fields: [buyer_id], references: [customer_id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@schema("public")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model products {
+  id          Int       @id @default(autoincrement())
+  user_id     String?   @db.Uuid
+  name        String
+  description String
+  media_urls  String[]
+  created_at  DateTime? @default(now()) @db.Timestamp(6)
+  email       String
+  business_id String?
+  phone       String?   @db.VarChar(25)
+  whatsapp    String?   @db.VarChar(25)
+  price_inr   Decimal   @default(0.00) @db.Decimal(10, 2)
+  users       users?    @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_user")
+
+  @@schema("public")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model ratings {
+  id               Int        @id @default(autoincrement())
+  user_id          String?    @db.Uuid
+  business_user_id String?    @db.Uuid
+  rating           Int
+  created_at       DateTime?  @default(now()) @db.Timestamptz(6)
+  comment          String?
+  users            users?     @relation(fields: [business_user_id], references: [user_id], onDelete: Cascade, onUpdate: NoAction)
+  customers        customers? @relation(fields: [user_id], references: [customer_id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@schema("public")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model sales {
+  id                       String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  customer_name            String
+  customer_email           String?
+  customer_phone           String?
+  customer_address         String?
+  user_id                  String    @db.Uuid
+  created_at               DateTime  @default(now()) @db.Timestamptz(6)
+  items                    Json
+  users                    String?   @db.Uuid
+  invoice_number           String?
+  sale_date                DateTime? @db.Date
+  users_sales_usersTousers users?    @relation("sales_usersTousers", fields: [users], references: [user_id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@schema("public")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model servicesBook {
+  id                Int       @id(map: "distance_calculations_pkey") @default(autoincrement())
+  pickup_details    String
+  drop_details      String
+  origin            String
+  destination       String
+  distance          String
+  delivery_charge   String
+  created_at        DateTime? @default(now()) @db.Timestamptz(6)
+  status            String    @default("Pending")
+  status_updated_at DateTime? @default(now()) @db.Timestamptz(6)
+  origin_cord       String?
+  destination_cord  String?
+  customer_id       String?   @db.Uuid
+  user_id           String?   @db.Uuid
+  isBusiness        Int?      @db.SmallInt
+
+  @@unique([origin, destination], map: "idx_unique_calculation")
+  @@schema("public")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model team_users {
+  id         Int       @id @default(autoincrement())
+  username   String?   @db.VarChar(100)
+  email      String?   @db.VarChar(100)
+  team_code  String?   @db.VarChar(50)
+  password   String?   @db.VarChar(255)
+  created_at DateTime? @default(now()) @db.Timestamp(6)
+
+  @@schema("public")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model teams {
+  id         String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  team_name  String    @unique @db.VarChar(255)
+  password   String    @db.VarChar(255)
+  created_at DateTime? @default(now()) @db.Timestamp(6)
+  owner_id   Decimal?  @db.Decimal
+
+  @@schema("public")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model user_contacts {
+  id                                         String  @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  user_id                                    String? @db.Uuid
+  contact_user_id                            String? @db.Uuid
+  link1                                      String? @db.Uuid
+  users_user_contacts_contact_user_idTousers users?  @relation("user_contacts_contact_user_idTousers", fields: [contact_user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction)
+  users_user_contacts_link1Tousers           users?  @relation("user_contacts_link1Tousers", fields: [link1], references: [user_id], onDelete: NoAction, onUpdate: NoAction)
+  users_user_contacts_user_idTousers         users?  @relation("user_contacts_user_idTousers", fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@schema("public")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model user_data {
+  id      String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id String? @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name    String? @db.VarChar
+  email   String? @db.VarChar
+  to      String? @db.VarChar
+  from    String? @db.VarChar
+
+  @@schema("public")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model user_links {
+  user_id String  @id @db.Uuid
+  link1   String?
+  link2   String?
+  link3   String?
+  users   users   @relation(fields: [user_id], references: [user_id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@schema("public")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model user_messages {
+  id              Int       @id @default(autoincrement())
+  sender_name     String
+  sender_address  String?
+  sender_phone    String?
+  message_content String
+  receiver_id     String?   @db.Uuid
+  created_at      DateTime? @default(now()) @db.Timestamp(6)
+  users           users?    @relation(fields: [receiver_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@schema("public")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model users {
+  user_id                                            String            @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name                                               String            @db.VarChar(255)
+  email                                              String            @unique
+  password                                           String
+  address                                            String?           @db.VarChar(255)
+  phone                                              String?           @db.VarChar(20)
+  is_business_owner                                  Boolean?          @default(false)
+  business_name                                      String?           @db.VarChar(255)
+  business_address                                   String?           @db.VarChar(255)
+  business_type                                      String?           @db.VarChar(100)
+  product_service                                    String?           @db.VarChar(255)
+  business_experience                                String?
+  business_description                               String?
+  is_registered                                      Boolean?          @default(false)
+  isbusinessowner                                    Boolean?          @default(false)
+  photo                                              String?           @default("")
+  categories                                         String[]
+  whatsapp                                           String?
+  rating                                             Decimal?          @default(0) @db.Decimal(3, 2)
+  vendor_id                                          Int?
+  delivery_orders                                    delivery_orders[]
+  messages_messages_receiver_idTousers               messages[]        @relation("messages_receiver_idTousers")
+  messages_messages_sender_idTousers                 messages[]        @relation("messages_sender_idTousers")
+  new_products                                       new_products[]
+  order_data                                         order_data[]
+  products                                           products[]
+  ratings                                            ratings[]
+  sales_sales_usersTousers                           sales[]           @relation("sales_usersTousers")
+  user_contacts_user_contacts_contact_user_idTousers user_contacts[]   @relation("user_contacts_contact_user_idTousers")
+  user_contacts_user_contacts_link1Tousers           user_contacts[]   @relation("user_contacts_link1Tousers")
+  user_contacts_user_contacts_user_idTousers         user_contacts[]   @relation("user_contacts_user_idTousers")
+  user_links                                         user_links?
+  user_messages                                      user_messages[]
+
+  @@schema("public")
+}
+
+model delivery_rec {
+  id         Int       @id @default(autoincrement())
+  date       DateTime? @db.Date
+  name       String?
+  address    String?
+  mobile     String?
+  vendor     String?
+  team       String?
+  mode       String?
+  pb         String?
+  dc         String?
+  pb_amt     Int?
+  dc_amt     Int?
+  tsb        Int?
+  cid        Int?
+  status     String?
+  note       String?
+  order_id   String?
+  vendor_id  Int?
+  deliver_at DateTime? @db.Timestamp(6)
+
+  @@schema("public")
+}
