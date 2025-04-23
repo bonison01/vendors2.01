@@ -80,7 +80,8 @@ const DatePicker: React.FC<DatePickerProps> = ({
   // Enhanced event stopper to prevent propagation for clicks, focus, and other events
   const stopPropagation = (e: React.SyntheticEvent) => {
     e.stopPropagation();
-    e.nativeEvent.stopImmediatePropagation(); // Stops further propagation to parent components
+    e.preventDefault(); // Prevent default to avoid focus issues
+    e.nativeEvent.stopImmediatePropagation(); // Stops further propagation
   };
 
   return (
@@ -102,9 +103,9 @@ const DatePicker: React.FC<DatePickerProps> = ({
       <PopoverContent
         className="w-auto p-0"
         onClick={stopPropagation}
-        onFocus={stopPropagation}
-        onMouseDown={stopPropagation} // Prevent mousedown events from closing parent
-        onKeyDown={stopPropagation} // Prevent keyboard events from closing parent
+        onFocusCapture={stopPropagation} // Prevent focus events from bubbling
+        onMouseDown={stopPropagation}
+        onKeyDown={stopPropagation}
       >
         <div className="flex justify-between p-2">
           <div>
@@ -112,7 +113,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
               onValueChange={(month) =>
                 handleDateChange(
                   setMonth(date || new Date(), months.indexOf(month)),
-                  false
+                  false // Keep popover open
                 )
               }
             >
@@ -126,7 +127,12 @@ const DatePicker: React.FC<DatePickerProps> = ({
                   placeholder={date ? months[getMonth(date)] : "Month"}
                 />
               </SelectTrigger>
-              <SelectContent onClick={stopPropagation} onFocus={stopPropagation}>
+              <SelectContent
+                onClick={stopPropagation}
+                onFocusCapture={stopPropagation}
+                onMouseDown={stopPropagation}
+                onKeyDown={stopPropagation}
+              >
                 {months.map((month) => (
                   <SelectItem key={month} value={month}>
                     {month}
@@ -141,7 +147,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
               onValueChange={(year) =>
                 handleDateChange(
                   setYear(date || new Date(), parseInt(year)),
-                  false
+                  false // Keep popover open
                 )
               }
             >
@@ -155,7 +161,12 @@ const DatePicker: React.FC<DatePickerProps> = ({
                   placeholder={date ? getYear(date).toString() : "Year"}
                 />
               </SelectTrigger>
-              <SelectContent onClick={stopPropagation} onFocus={stopPropagation}>
+              <SelectContent
+                onClick={stopPropagation}
+                onFocusCapture={stopPropagation}
+                onMouseDown={stopPropagation}
+                onKeyDown={stopPropagation}
+              >
                 {years.map((year) => (
                   <SelectItem key={year} value={year.toString()}>
                     {year}

@@ -1,77 +1,108 @@
-'use client'
+'use client';
 
-import React, {useEffect} from "react"
-import { AppSidebar } from "@/components/app-sidebar"
-import { SiteHeader } from "@/components/site-header"
-import {
-    SidebarInset,
-    SidebarProvider,
-} from "@/components/ui/sidebar"
+import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { AppSidebar } from '@/components/app-sidebar';
+import { SiteHeader } from '@/components/site-header';
+import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { useDispatch } from 'react-redux';
 import { setUser } from '@/lib/store/userSilce';
 
 export default function MainLayout({
-    children,
+  children,
 }: Readonly<{
-    children: React.ReactNode;
+  children: React.ReactNode;
 }>) {
+  const dispatch = useDispatch();
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(true);
+  const [isAuthorized, setIsAuthorized] = useState(false);
 
-    const dispatch = useDispatch();
+  useEffect(() => {
+    const initializeUser = async () => {
+      // Retrieve user_id and role from localStorage
+      const userId = localStorage.getItem('user_id');
+      const encodedRole = localStorage.getItem('role');
 
-    useEffect(() => {
-        const initializeUser = async () => {
-            const userId = localStorage.getItem('user_id');
-            if (userId) {
-                try {
-                    const response = await fetch(`/api/user/getUserById?user_id=${userId}`, {
-                        method: 'GET',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                    });
+      // If user_id or role is missing, redirect to login
+      if (!userId || !encodedRole) {
+        localStorage.removeItem('user_id');
+        localStorage.removeItem('role');
+        router.push('/login');
+        return;
+      }
 
-                    const data = await response.json();
+      try {
+        // Decode base64-encoded role
+        const role = atob(encodedRole);
 
-                    if (response.ok) {
-                        dispatch(setUser(data.user));
-                    } else {
-                        console.error('Failed to fetch user:', data.error);
-                        // Clear invalid user_id and role from localStorage
-                        localStorage.removeItem('user_id');
-                        localStorage.removeItem('role');
-                    }
-                } catch (error) {
-                    console.error('Error fetching user:', error);
-                    // Clear invalid user_id and role from localStorage
-                    localStorage.removeItem('user_id');
-                    localStorage.removeItem('role');
-                }
-            }
-        };
+        // Check if role is Vendor
+        if (role !== 'Vendor') {
+        //   localStorage.removeItem('user_id');
+        //   localStorage.removeItem('role');
+          router.push('/');
+          return;
+        }
 
-        initializeUser();
-    }, [dispatch]);
+        // Fetch user data
+        const response = await fetch(`/api/user/getUserById?user_id=${userId}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
 
-    return (
-        <>
-            <SidebarProvider
-                style={
-                    {
-                        "--sidebar-width": "calc(var(--spacing) * 52)",
-                        "--header-height": "calc(var(--spacing) * 12)",
-                    } as React.CSSProperties
-                }
-            >
-                <AppSidebar variant="inset" />
-                <SidebarInset>
-                    <SiteHeader />
-                    <div className="flex flex-1 flex-col">
-                        <div className="@container/main flex flex-1 flex-col gap-2">
-                            {children}
-                        </div>
-                    </div>
-                </SidebarInset>
-            </SidebarProvider>
-        </>
-    );
+        const data = await response.json();
+
+        if (response.ok) {
+          // Verify role from API matches Vendor
+        //   if (data.user.role === 'Vendor') {
+            dispatch(setUser(data.user));
+            setIsAuthorized(true);
+        //   } else {
+        //     throw new Error('User is not a Vendor');
+        //   }
+        } else {
+          throw new Error(data.error || 'Failed to fetch user');
+        }
+      } catch (error) {
+        console.error('Error initializing user:', error);
+        // localStorage.removeItem('user_id');
+        // localStorage.removeItem('role');
+        // router.push('/login');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    initializeUser();
+  }, [dispatch, router]);
+
+  // Show loading state or nothing while checking authorization
+  if (isLoading || !isAuthorized) {
+    return  <div className="h-screen flex justify-center items-center p-6">Loading...</div>;
+  }
+
+  return (
+    <>
+      <SidebarProvider
+        style={
+          {
+            '--sidebar-width': 'calc(var(--spacing) * 52)',
+            '--header-height': 'calc(var(--spacing) * 12)',
+          } as React.CSSProperties
+        }
+      >
+        <AppSidebar variant="inset" />
+        <SidebarInset>
+          <SiteHeader />
+          <div className="flex flex-1 flex-col overflow-hidden">
+            <div className="@container/main flex flex-1 flex-col gap-2">
+              {children}
+            </div>
+          </div>
+        </SidebarInset>
+      </SidebarProvider>
+    </>
+  );
 }

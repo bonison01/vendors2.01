@@ -48,7 +48,6 @@ import {
   IconGripVertical,
   IconLayoutColumns,
   IconLoader,
-  IconPlus,
 } from '@tabler/icons-react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
@@ -88,17 +87,11 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from '@/components/ui/tabs';
-import DateRangeDropdown from '@/components/DateRangeDropdown';
-import { useIsMobile } from '@/hooks/use-mobile';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { PackageX, PackageCheck, Bike, FileDown } from 'lucide-react';
 import { jsPDF } from 'jspdf';
+import DateRangeDropdown from '@/components/DateRangeDropdown';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 // Schema for DataTable
 export const schema = z.object({
@@ -165,7 +158,7 @@ const mapOrderToSchema = (order: any) => ({
   },
 });
 
-// Generate PDF function (unchanged)
+// Generate Receipt PDF
 const generateReceiptPDF = (orderData: z.infer<typeof schema>) => {
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
@@ -281,7 +274,7 @@ const generateReceiptPDF = (orderData: z.infer<typeof schema>) => {
   }
 };
 
-// Generate Items List PDF (with combined items)
+// Generate Items List PDF
 const generateItemsListPDF = (orders: z.infer<typeof schema>[], filename: string) => {
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
@@ -322,13 +315,12 @@ const generateItemsListPDF = (orders: z.infer<typeof schema>[], filename: string
         if (existingItem) {
           // Combine quantities for the same product
           existingItem.quantity += item.quantity;
-          // Ensure price consistency (use the first price encountered)
+          // Ensure price consistency
           if (existingItem.discounted_price !== item.discounted_price) {
             console.warn(
               `Price mismatch for ${item.product_name} in store ${store.business_name}: ` +
               `${existingItem.discounted_price} vs ${item.discounted_price}`
             );
-            // Optionally, update to latest price or use average
             existingItem.discounted_price = item.discounted_price;
           }
         } else {
@@ -434,7 +426,7 @@ function TableCellViewer({ item }: { item: z.infer<typeof schema> }) {
         </DrawerHeader>
         <ScrollArea>
           <div className="flex flex-col gap-1 text-sm px-4 h-[70vh] md:h-[80vh]">
-            <DrawerTitle className='mb-2 text-base'>Account Details</DrawerTitle>
+            {/* <DrawerTitle className='mb-2 text-base'>Account Details</DrawerTitle>
             <div className='flex flex-row gap-3'>
               <Label>Name:</Label> {item.customers.name || 'N/A'}
             </div>
@@ -443,7 +435,7 @@ function TableCellViewer({ item }: { item: z.infer<typeof schema> }) {
             </div>
             <div className='flex flex-row gap-3'>
               <Label>Email:</Label> {item.customers.email || 'N/A'}
-            </div>
+            </div> */}
 
             <DrawerTitle className='mt-3 mb-2 text-base'>Shipping Details</DrawerTitle>
             <div className='flex flex-row gap-3'>
@@ -601,7 +593,7 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
           <DropdownMenuItem className='flex flex-row gap-2' onClick={() => generateReceiptPDF(row.original)}>
             <FileDown className='text-white' /> Invoice
           </DropdownMenuItem>
-          <DropdownMenuSeparator />
+          {/* <DropdownMenuSeparator />
           <Label className='text-gray-300 mb-2'>Change Status</Label>
           <DropdownMenuItem className='flex flex-row ml-1 gap-2'>
             <Bike className='text-white' /> Out for Delivery
@@ -611,7 +603,7 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
           </DropdownMenuItem>
           <DropdownMenuItem className='flex flex-row ml-1 gap-2'>
             <PackageX className='text-white' /> Cancel
-          </DropdownMenuItem>
+          </DropdownMenuItem> */}
         </DropdownMenuContent>
       </DropdownMenu>
     ),
@@ -815,7 +807,7 @@ function DataTable({ data }: { data: z.infer<typeof schema>[] }) {
           {table.getFilteredSelectedRowModel().rows.length} of{' '}
           {table.getFilteredRowModel().rows.length} row(s) selected.
         </div>
-        <div className="flex w-full items-center gap-8 lg:w-fit">
+        <div className="flex w-full items-center gap-8 lg:w-fit mt-3">
           <div className="items-center gap-2 flex">
             <Label htmlFor="rows-per-page" className="text-sm font-medium hidden sm:flex">
               Rows per page
@@ -886,21 +878,35 @@ function DataTable({ data }: { data: z.infer<typeof schema>[] }) {
   );
 }
 
-// OrdersPage Component
-export default function OrdersPage() {
+// SellerOrdersPage Component
+export default function SellerOrdersPage() {
   const [orders, setOrders] = useState<z.infer<typeof schema>[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [startDate, setStartDate] = useState(format(startOfMonth(new Date()), 'yyyy-MM-dd'));
   const [endDate, setEndDate] = useState(format(addDays(new Date(), 1), 'yyyy-MM-dd'));
+  const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
+    // Retrieve user_id from localStorage
+    const storedUserId = localStorage.getItem('user_id');
+    if (!storedUserId) {
+      setError('User ID not found. Please log in.');
+      setLoading(false);
+      return;
+    }
+    setUserId(storedUserId);
+  }, []);
+
+  useEffect(() => {
+    if (!userId) return;
+
     const fetchOrders = async () => {
       setLoading(true);
       setError(null);
       try {
         const response = await fetch(
-          `/api/orders/getAllOrder?startdate=${startDate}&enddate=${endDate}`
+          `/api/orders/getOrderById?user_id=${userId}&startdate=${startDate}&enddate=${endDate}`
         );
         const data = await response.json();
         if (!response.ok) {
@@ -919,7 +925,7 @@ export default function OrdersPage() {
     };
 
     fetchOrders();
-  }, [startDate, endDate]);
+  }, [userId, startDate, endDate]);
 
   // Handle Item List PDF
   const handleItemList = () => {
@@ -929,6 +935,15 @@ export default function OrdersPage() {
     }
     generateItemsListPDF(orders, 'All_Items_List.pdf');
   };
+
+  if (!userId && !loading) {
+    return (
+      <div className="p-6">
+        <h2 className="text-2xl font-semibold">Order List</h2>
+        <p className="text-red-500 mt-4">Please log in to view your orders.</p>
+      </div>
+    );
+  }
 
   return (
     <ScrollArea>

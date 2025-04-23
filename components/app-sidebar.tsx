@@ -8,7 +8,7 @@ import {
   IconListDetails,
   IconUsers,
 } from "@tabler/icons-react"
-import { PackagePlus, Truck } from "lucide-react"
+import { PackagePlus, Truck, PackageSearch, ClipboardPenLine } from "lucide-react"
 import { NavMain } from "@/components/nav-main"
 import { NavSecondary } from "@/components/nav-secondary"
 import { NavUser } from "@/components/nav-user"
@@ -32,11 +32,16 @@ const navMain = [
   {
     title: "Parcel",
     url: "/parcel",
-    icon: IconDashboard,
+    icon: ClipboardPenLine,
+  },
+  {
+    title: "Order List",
+    url: "/order-list",
+    icon: PackageSearch,
   },
   {
     title: "Product List",
-    url: "/list-product",
+    url: "/product-list",
     icon: IconListDetails,
   },
   {
@@ -60,12 +65,12 @@ const navAdmin = [
   {
     title: "Parcel",
     url: "/admin/parcel-service",
-    icon: PackagePlus,
+    icon: ClipboardPenLine,
   },
   {
     title: "Order List",
     url: "/admin/delivery-order",
-    icon: IconListDetails,
+    icon: PackageSearch,
   },
   {
     title: "Service Book",
