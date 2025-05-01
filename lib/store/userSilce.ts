@@ -19,7 +19,7 @@ interface User {
   categories: string[];
   whatsapp: string | null;
   rating: string | null;
-  vender_id: number | null;
+  vendor_id: number | null;
 }
 
 interface UserState {

@@ -56,6 +56,24 @@ const navMain = [
   },
 ]
 
+const navMainNonBusinessOwner = [
+  {
+    title: "Dashboard",
+    url: "/dashboard",
+    icon: IconDashboard,
+  },
+  {
+    title: "Parcel",
+    url: "/parcel",
+    icon: ClipboardPenLine,
+  },
+  {
+    title: "Profile",
+    url: "/profile",
+    icon: IconUsers,
+  },
+]
+
 const navAdmin = [
   {
     title: "Dashboard",
@@ -118,11 +136,17 @@ const navSecondary = [
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const user = useAppSelector((state) => state.user.user)
   const role = typeof window !== "undefined" ? atob(localStorage.getItem("role") || "") : ""
+  const isBusinessOwner = useAppSelector((state) => state.user.user?.is_business_owner) ?? false
 
-  // Determine navigation items based on role
-  const navItems = role === "Admin" ? navAdmin : role === "Vendor" ? navMain : navDel
+  const navItems =
+    role === "Admin"
+      ? navAdmin
+      : role === "Vendor"
+      ? isBusinessOwner
+        ? navMain
+        : navMainNonBusinessOwner
+      : navDel
 
-  // Default user data if Redux store is empty
   const userData = {
     name: user?.name || "Guest",
     email: user?.email || "No email",

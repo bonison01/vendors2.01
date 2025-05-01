@@ -196,7 +196,7 @@ model new_products {
   unit             String?
   unit_quantity    String?
   updated_at       DateTime?    @db.Timestamp(6)
-  users            users?       @relation(fields: [user_id], references: [user_id], onDelete: Cascade, onUpdate: NoAction)
+  users            users?       @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction)
   order_item       order_item[]
 
   @@schema("public")
@@ -429,7 +429,7 @@ model user_messages {
 /// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model users {
-  user_id                                            String            @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  user_id                                            String            @id @unique @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name                                               String            @db.VarChar(255)
   email                                              String            @unique
   password                                           String
@@ -467,25 +467,24 @@ model users {
 }
 
 model delivery_rec {
-  id         Int       @id @default(autoincrement())
-  date       DateTime? @db.Date
-  name       String?
-  address    String?
-  mobile     String?
-  vendor     String?
-  team       String?
-  mode       String?
-  pb         String?
-  dc         String?
-  pb_amt     Int?
-  dc_amt     Int?
-  tsb        Int?
-  cid        Int?
-  status     String?
-  note       String?
-  order_id   String?
-  vendor_id  Int?
-  deliver_at DateTime? @db.Timestamp(6)
+  date        DateTime? @db.Date
+  name        String?
+  address     String?
+  mobile      String?
+  vendor      String?
+  team        String?
+  mode        String?
+  pb          String?
+  dc          String?
+  pb_amt      Int?
+  dc_amt      Int?
+  tsb         Int?
+  cid         Int?
+  status      String?
+  note        String?
+  order_id    String    @id
+  vendor_id   Int?
+  delivery_id Int?
 
   @@schema("public")
 }

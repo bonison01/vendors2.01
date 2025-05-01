@@ -12,7 +12,7 @@ export async function uploadMedia(file: File, userId: string | undefined): Promi
 
   const fileExt = file.name.split('.').pop();
   const fileName = `${userId}_${Date.now()}.${fileExt}`;
-  const filePath = `media/${fileName}`;
+  const filePath = `${fileName}`;
 
   const { error } = await supabase.storage
     .from('product-media')
