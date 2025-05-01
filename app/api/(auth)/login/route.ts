@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
 
     // Determine role
     const role =
-      email === 'justmstengservices@gmail.com' && password === 'Mateng@011'
+      email === 'justmatengservices@gmail.com' && password === 'Mateng@011'
         ? 'Admin'
         : 'Vendor';
 
