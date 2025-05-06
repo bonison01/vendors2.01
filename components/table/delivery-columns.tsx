@@ -3,6 +3,7 @@ import { ArrowUpDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { EnhancedDeliveryRecord } from '@/types/delivery-record';
+import { format } from 'date-fns'
 
 export const columns: ColumnDef<EnhancedDeliveryRecord>[] = [
   {
@@ -18,7 +19,7 @@ export const columns: ColumnDef<EnhancedDeliveryRecord>[] = [
     ),
     cell: ({ row }) => {
       const date = row.getValue('date') as string | null;
-      return <div>{date ? new Date(date).toLocaleDateString() : '-'}</div>;
+      return <div>{date ? format(new Date(date), 'dd MMM, yyyy') : '-'}</div>;
     },
   },
   {
@@ -56,16 +57,13 @@ export const columns: ColumnDef<EnhancedDeliveryRecord>[] = [
   },
   {
     accessorKey: 'calculatedTsb',
-    header: ({ column }) => (
-      <Button
-        variant="ghost"
-        onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-      >
-        TSB
-        <ArrowUpDown className="ml-2 h-4 w-4" />
-      </Button>
-    ),
+    header: 'TSB',
     cell: ({ row }) => <div>{row.getValue('calculatedTsb')}</div>,
+  },
+  {
+    accessorKey: 'runningBalance',
+    header: 'Balance',
+    cell: ({ row }) => <div>₹{(row.getValue('runningBalance') as number).toFixed(2)}</div>,
   },
   {
     accessorKey: 'status',

@@ -1,489 +1,3 @@
-// 'use client'
-
-// import React, { useEffect, useState } from 'react';
-// import { useParams, useSearchParams } from 'next/navigation';
-// import {
-//     ColumnDef,
-//     ColumnFiltersState,
-//     SortingState,
-//     VisibilityState,
-//     flexRender,
-//     getCoreRowModel,
-//     getFilteredRowModel,
-//     getPaginationRowModel,
-//     getSortedRowModel,
-//     useReactTable,
-// } from '@tanstack/react-table';
-// import { ArrowUpDown, ChevronDown } from 'lucide-react';
-// import { Button } from '@/components/ui/button';
-// import {
-//     DropdownMenu,
-//     DropdownMenuCheckboxItem,
-//     DropdownMenuContent,
-//     DropdownMenuTrigger,
-// } from '@/components/ui/dropdown-menu';
-// import { Input } from '@/components/ui/input';
-// import {
-//     Table,
-//     TableBody,
-//     TableCell,
-//     TableHead,
-//     TableHeader,
-//     TableRow,
-// } from '@/components/ui/table';
-// import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-// import { Badge } from '@/components/ui/badge';
-// import { Loader2 } from 'lucide-react';
-// import { ScrollArea } from '@/components/ui/scroll-area';
-// import {
-//     Select,
-//     SelectContent,
-//     SelectItem,
-//     SelectTrigger,
-//     SelectValue,
-// } from '@/components/ui/select';
-// import { Label } from '@/components/ui/label';
-// import {
-//     IconChevronLeft,
-//     IconChevronRight,
-//     IconChevronsLeft,
-//     IconChevronsRight,
-// } from '@tabler/icons-react';
-
-// interface DeliveryRecord {
-//     date: string | null;
-//     name: string | null;
-//     address: string | null;
-//     mobile: string | null;
-//     vendor: string | null;
-//     team: string | null;
-//     mode: string | null;
-//     pb: string | null;
-//     dc: string | null;
-//     pb_amt: number | null;
-//     dc_amt: number | null;
-//     tsb: number | null;
-//     cid: number | null;
-//     status: string | null;
-//     note: string | null;
-//     order_id: string;
-//     vendor_id: number | null;
-//     delivery_id: number | null;
-// }
-
-// interface EnhancedDeliveryRecord extends DeliveryRecord {
-//     calculatedTsb: number;
-//     calculatedCid: number;
-//     productBill: string | number;
-//     deliveryAmt: string;
-//     description: string;
-// }
-
-// const columns: ColumnDef<EnhancedDeliveryRecord>[] = [
-//     {
-//         accessorKey: 'date',
-//         header: ({ column }) => (
-//             <Button
-//                 variant="ghost"
-//                 onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-//             >
-//                 Date
-//                 <ArrowUpDown className="ml-2 h-4 w-4" />
-//             </Button>
-//         ),
-//         cell: ({ row }) => {
-//             const date = row.getValue('date') as string | null;
-//             return <div>{date ? new Date(date).toLocaleDateString() : '-'}</div>;
-//         },
-//     },
-//     {
-//         accessorKey: 'order_id',
-//         header: ({ column }) => (
-//             <Button
-//                 variant="ghost"
-//                 onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-//             >
-//                 Order ID
-//                 <ArrowUpDown className="ml-2 h-4 w-4" />
-//             </Button>
-//         ),
-//         cell: ({ row }) => <div>{row.getValue('order_id')}</div>,
-//     },
-//     {
-//         accessorKey: 'description',
-//         header: 'Description',
-//         cell: ({ row }) => <div>{row.getValue('description')}</div>,
-//     },
-//     {
-//         accessorKey: 'mode',
-//         header: 'Mode',
-//         cell: ({ row }) => <div>{row.getValue('mode') || '-'}</div>,
-//     },
-//     {
-//         accessorKey: 'productBill',
-//         header: 'Product Bill',
-//         cell: ({ row }) => <div>{row.getValue('productBill')}</div>,
-//     },
-//     {
-//         accessorKey: 'deliveryAmt',
-//         header: 'Delivery Amt',
-//         cell: ({ row }) => <div>{row.getValue('deliveryAmt')}</div>,
-//     },
-//     {
-//         accessorKey: 'calculatedTsb',
-//         header: ({ column }) => (
-//             <Button
-//                 variant="ghost"
-//                 onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-//             >
-//                 TSB
-//                 <ArrowUpDown className="ml-2 h-4 w-4" />
-//             </Button>
-//         ),
-//         cell: ({ row }) => <div>{row.getValue('calculatedTsb')}</div>,
-//     },
-//     {
-//         accessorKey: 'status',
-//         header: 'Status',
-//         cell: ({ row }) => {
-//             const status = row.getValue('status') as string | null;
-//             return (
-//                 <Badge variant={status === 'Delivered' ? 'default' : 'secondary'}>
-//                     {status || '-'}
-//                 </Badge>
-//             );
-//         },
-//     },
-//     {
-//         accessorKey: 'note',
-//         header: 'Notes',
-//         cell: ({ row }) => <div>{row.getValue('note') || '-'}</div>,
-//     },
-// ];
-
-// export default function DeliveryRecordsPage() {
-//     const [records, setRecords] = useState<EnhancedDeliveryRecord[]>([]);
-//     const [totalBalance, setTotalBalance] = useState<number>(0);
-//     const [loading, setLoading] = useState<boolean>(true);
-//     const [error, setError] = useState<string | null>(null);
-//     const [sorting, setSorting] = useState<SortingState>([{ id: 'date', desc: true }]);
-//     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-//     const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
-//     const [globalFilter, setGlobalFilter] = useState('');
-
-//     const { vendor_id } = useParams();
-//     const searchParams = useSearchParams();
-//     const name = searchParams.get('name') || '-';
-//     const phone = searchParams.get('phone') || '-';
-//     const business_name = searchParams.get('business_name') || '-';
-
-//     // Lookup table for TSB and CID calculations
-//     const tsbCidLookup: Record<string, (pbAmt: number, dcAmt: number) => { tsb: number; cid: number }> = {
-//         'COD_COD': (pbAmt, dcAmt) => ({ tsb: pbAmt, cid: pbAmt + dcAmt }),
-//         'COD_Prepaid': (pbAmt, dcAmt) => ({ tsb: pbAmt, cid: pbAmt }),
-//         'COD_Due': (pbAmt, dcAmt) => ({ tsb: pbAmt - dcAmt, cid: pbAmt }),
-//         'Prepaid_COD': (pbAmt, dcAmt) => ({ tsb: 0, cid: dcAmt }),
-//         'Prepaid_Prepaid': (pbAmt, dcAmt) => ({ tsb: 0, cid: 0 }),
-//         'Prepaid_Due': (pbAmt, dcAmt) => ({ tsb: -dcAmt, cid: 0 }),
-//         'Due_COD': (pbAmt, dcAmt) => ({ tsb: -pbAmt, cid: dcAmt }),
-//         'Due_Prepaid': (pbAmt, dcAmt) => ({ tsb: -pbAmt, cid: 0 }),
-//         'Due_Due': (pbAmt, dcAmt) => ({ tsb: -pbAmt - dcAmt, cid: 0 }),
-//     };
-
-//     // Function to calculate TSB and CID based on pb and dc
-//     const calculateTSBandCID = (record: DeliveryRecord) => {
-//         const pb = record.pb || '';
-//         const dc = record.dc || '';
-//         const pbAmt = record.pb_amt || 0;
-//         const dcAmt = record.dc_amt || 0;
-
-//         const key = `${pb}_${dc}`;
-//         const calculator = tsbCidLookup[key] || (() => ({ tsb: 0, cid: 0 }));
-//         return calculator(pbAmt, dcAmt);
-//     };
-
-//     // Function to calculate Product Bill
-//     const calculateProductBill = (pb: string | null, pbAmt: number | null) => {
-//         if (!pb || !pbAmt) return '-';
-//         if (pb === 'Prepaid') return 0;
-//         if (pb === 'Due') return -pbAmt;
-//         if (pb === 'COD') return pbAmt;
-//         return '-';
-//     };
-
-//     // Function to calculate Delivery Amt
-//     const calculateDeliveryAmt = (dc: string | null, dcAmt: number | null) => {
-//         if (!dc || !dcAmt) return '-';
-//         return `${dcAmt} (${dc})`;
-//     };
-
-//     // Function to create Description
-//     const createDescription = (name: string | null, address: string | null, mobile: string | null) => {
-//         return [name, address, mobile].filter(Boolean).join(', ') || '-';
-//     };
-
-//     useEffect(() => {
-//         const fetchDeliveryRecords = async () => {
-//             if (!vendor_id) {
-//                 setError('Vendor ID not found in route.');
-//                 setLoading(false);
-//                 return;
-//             }
-
-//             try {
-//                 setLoading(true);
-//                 const response = await fetch(`/api/parcel/getById?vendor_id=${vendor_id}`);
-//                 const data = await response.json();
-
-//                 if (!response.ok) {
-//                     if (data.message === 'No delivery records found for this vendor_id') {
-//                         setError('No delivery records found');
-//                     } else {
-//                         throw new Error(data.error || 'Failed to fetch delivery records');
-//                     }
-//                 } else {
-//                     // Enhance records with calculated fields
-//                     const enhancedRecords: EnhancedDeliveryRecord[] = data.deliveryRecords.map((record: DeliveryRecord) => {
-//                         const { tsb, cid } = calculateTSBandCID(record);
-//                         return {
-//                             ...record,
-//                             calculatedTsb: tsb,
-//                             calculatedCid: cid,
-//                             productBill: calculateProductBill(record.pb, record.pb_amt),
-//                             deliveryAmt: calculateDeliveryAmt(record.dc, record.dc_amt),
-//                             description: createDescription(record.name, record.address, record.mobile),
-//                         };
-//                     });
-
-//                     setRecords(enhancedRecords);
-//                     setTotalBalance(enhancedRecords.reduce((sum, record) => sum + record.calculatedTsb, 0));
-//                     setError(null);
-//                 }
-//             } catch (err: any) {
-//                 setError(err.message);
-//             } finally {
-//                 setLoading(false);
-//             }
-//         };
-
-//         fetchDeliveryRecords();
-//     }, [vendor_id]);
-
-//     const table = useReactTable({
-//         data: records,
-//         columns,
-//         onSortingChange: setSorting,
-//         onColumnFiltersChange: setColumnFilters,
-//         getCoreRowModel: getCoreRowModel(),
-//         getPaginationRowModel: getPaginationRowModel(),
-//         getSortedRowModel: getSortedRowModel(),
-//         getFilteredRowModel: getFilteredRowModel(),
-//         onColumnVisibilityChange: setColumnVisibility,
-//         globalFilterFn: (row, _columnId, filterValue) => {
-//             return Object.values(row.original).some((value) =>
-//                 String(value || '').toLowerCase().includes(filterValue.toLowerCase())
-//             );
-//         },
-//         state: {
-//             sorting,
-//             columnFilters,
-//             columnVisibility,
-//             globalFilter,
-//         },
-//     });
-
-//     return (
-//         <ScrollArea>
-//             <div className="w-[100vw] md:w-full h-[calc(100svh-4rem)]">
-//                 <div className="mx-auto p-4">
-//                     <div className='flex gap-4 w-full'>
-//                         <Card className="mb-2 w-80">
-//                             <CardContent className="flex flex-col gap-2">
-//                                 <CardTitle>Total Balance</CardTitle>
-//                                 <p className={`text-3xl font-bold ${totalBalance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-//                                     ₹{totalBalance.toFixed(2)}
-//                                 </p>
-//                             </CardContent>
-//                         </Card>
-//                         <Card className="mb-2 w-full">
-//                             <CardContent className="flex flex-col gap-2">
-//                                 <CardTitle>Vendor Details</CardTitle>
-//                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-//                                     <div>
-//                                         <CardDescription className="text-sm font-medium">Name</CardDescription>
-//                                         <p className="text-lg">{name}</p>
-//                                     </div>
-//                                     <div>
-//                                         <CardDescription className="text-sm font-medium">Phone</CardDescription>
-//                                         <p className="text-lg">{phone}</p>
-//                                     </div>
-//                                     <div>
-//                                         <CardDescription className="text-sm font-medium">Business Name</CardDescription>
-//                                         <p className="text-lg">{business_name}</p>
-//                                     </div>
-//                                 </div>
-//                             </CardContent>
-//                         </Card>
-//                     </div>
-
-//                     {loading && (
-//                         <div className="flex justify-center items-center h-64">
-//                             <Loader2 className="h-8 w-8 animate-spin" />
-//                         </div>
-//                     )}
-//                     {error && (
-//                         <div className="text-gray-500 text-center p-4">
-//                             {error}
-//                         </div>
-//                     )}
-//                     {!loading && !error && (
-//                         <div className="w-full">
-//                             <div className="flex items-center py-4">
-//                                 <Input
-//                                     placeholder="Search..."
-//                                     value={globalFilter}
-//                                     onChange={(event) => setGlobalFilter(event.target.value)}
-//                                     className="max-w-sm ml-1"
-//                                 />
-//                                 <DropdownMenu>
-//                                     <DropdownMenuTrigger asChild>
-//                                         <Button variant="outline" className="ml-auto">
-//                                             Columns <ChevronDown className="ml-2 h-4 w-4" />
-//                                         </Button>
-//                                     </DropdownMenuTrigger>
-//                                     <DropdownMenuContent align="end">
-//                                         {table
-//                                             .getAllColumns()
-//                                             .filter((column) => column.getCanHide())
-//                                             .map((column) => (
-//                                                 <DropdownMenuCheckboxItem
-//                                                     key={column.id}
-//                                                     className="capitalize"
-//                                                     checked={column.getIsVisible()}
-//                                                     onCheckedChange={(value) => column.toggleVisibility(!!value)}
-//                                                 >
-//                                                     {column.id}
-//                                                 </DropdownMenuCheckboxItem>
-//                                             ))}
-//                                     </DropdownMenuContent>
-//                                 </DropdownMenu>
-//                             </div>
-//                             <div className="rounded-md border">
-//                                 <Table>
-//                                     <TableHeader>
-//                                         {table.getHeaderGroups().map((headerGroup) => (
-//                                             <TableRow key={headerGroup.id}>
-//                                                 {headerGroup.headers.map((header) => (
-//                                                     <TableHead key={header.id}>
-//                                                         {header.isPlaceholder
-//                                                             ? null
-//                                                             : flexRender(header.column.columnDef.header, header.getContext())}
-//                                                     </TableHead>
-//                                                 ))}
-//                                             </TableRow>
-//                                         ))}
-//                                     </TableHeader>
-//                                     <TableBody>
-//                                         {table.getRowModel().rows?.length ? (
-//                                             table.getRowModel().rows.map((row) => (
-//                                                 <TableRow key={row.id}>
-//                                                     {row.getVisibleCells().map((cell) => (
-//                                                         <TableCell key={cell.id}>
-//                                                             {flexRender(cell.column.columnDef.cell, cell.getContext())}
-//                                                         </TableCell>
-//                                                     ))}
-//                                                 </TableRow>
-//                                             ))
-//                                         ) : (
-//                                             <TableRow>
-//                                                 <TableCell colSpan={columns.length} className="h-24 text-center">
-//                                                     No results.
-//                                                 </TableCell>
-//                                             </TableRow>
-//                                         )}
-//                                     </TableBody>
-//                                 </Table>
-//                             </div>
-//                             <div className="flex items-center justify-between px-4 mt-3">
-//                                 <div className="text-muted-foreground hidden flex-1 text-sm lg:flex">
-//                                     {table.getFilteredRowModel().rows.length} row(s) displayed.
-//                                 </div>
-//                                 <div className="flex w-full items-center gap-8 lg:w-fit">
-//                                     <div className="items-center gap-2 flex">
-//                                         <Label htmlFor="rows-per-page" className="text-sm font-medium hidden sm:flex">
-//                                             Rows per page
-//                                         </Label>
-//                                         <Select
-//                                             value={`${table.getState().pagination.pageSize}`}
-//                                             onValueChange={(value) => table.setPageSize(Number(value))}
-//                                         >
-//                                             <SelectTrigger size="sm" className="w-20" id="rows-per-page">
-//                                                 <SelectValue placeholder={table.getState().pagination.pageSize} />
-//                                             </SelectTrigger>
-//                                             <SelectContent side="top">
-//                                                 {[10, 15, 20, 30, 40, 50].map((pageSize) => (
-//                                                     <SelectItem key={pageSize} value={`${pageSize}`}>
-//                                                         {pageSize}
-//                                                     </SelectItem>
-//                                                 ))}
-//                                             </SelectContent>
-//                                         </Select>
-//                                     </div>
-//                                     <div className="flex w-fit items-center justify-center text-sm font-medium">
-//                                         Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
-//                                     </div>
-//                                     <div className="ml-auto flex items-center gap-2 lg:ml-0">
-//                                         <Button
-//                                             variant="outline"
-//                                             className="hidden h-8 w-8 p-0 lg:flex"
-//                                             onClick={() => table.setPageIndex(0)}
-//                                             disabled={!table.getCanPreviousPage()}
-//                                         >
-//                                             <span className="sr-only">Go to first page</span>
-//                                             <IconChevronsLeft />
-//                                         </Button>
-//                                         <Button
-//                                             variant="outline"
-//                                             className="size-8"
-//                                             size="icon"
-//                                             onClick={() => table.previousPage()}
-//                                             disabled={!table.getCanPreviousPage()}
-//                                         >
-//                                             <span className="sr-only">Go to previous page</span>
-//                                             <IconChevronLeft />
-//                                         </Button>
-//                                         <Button
-//                                             variant="outline"
-//                                             className="size-8"
-//                                             size="icon"
-//                                             onClick={() => table.nextPage()}
-//                                             disabled={!table.getCanNextPage()}
-//                                         >
-//                                             <span className="sr-only">Go to next page</span>
-//                                             <IconChevronRight />
-//                                         </Button>
-//                                         <Button
-//                                             variant="outline"
-//                                             className="hidden size-8 lg:flex"
-//                                             size="icon"
-//                                             onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-//                                             disabled={!table.getCanNextPage()}
-//                                         >
-//                                             <span className="sr-only">Go to last page</span>
-//                                             <IconChevronsRight />
-//                                         </Button>
-//                                     </div>
-//                                 </div>
-//                             </div>
-//                         </div>
-//                     )}
-//                 </div>
-//             </div>
-//         </ScrollArea>
-//     );
-// }
-
-
 'use client';
 
 import React, { useEffect, useState } from 'react';
@@ -491,16 +5,14 @@ import { useParams, useSearchParams } from 'next/navigation';
 import {
   ColumnDef,
   ColumnFiltersState,
-  SortingState,
   VisibilityState,
   flexRender,
   getCoreRowModel,
   getFilteredRowModel,
   getPaginationRowModel,
-  getSortedRowModel,
   useReactTable,
 } from '@tanstack/react-table';
-import { ChevronDown, Loader2 } from 'lucide-react';
+import { ChevronDown, ChevronUp, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -535,68 +47,27 @@ import {
   IconChevronsRight,
 } from '@tabler/icons-react';
 import { columns } from '@/components/table/delivery-columns';
-import { DeliveryRecord, EnhancedDeliveryRecord } from '@/types/delivery-record';
+import { EnhancedDeliveryRecord } from '@/types/delivery-record';
+import { balanceCalculation } from '@/lib/balanceCalculation';
+import { format } from 'date-fns'
 
 export default function DeliveryRecordsPage() {
   const [records, setRecords] = useState<EnhancedDeliveryRecord[]>([]);
   const [totalBalance, setTotalBalance] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [sorting, setSorting] = useState<SortingState>([{ id: 'date', desc: true }]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [globalFilter, setGlobalFilter] = useState('');
+  const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
+  const [cardPageIndex, setCardPageIndex] = useState(0);
+  const [cardPageSize, setCardPageSize] = useState(10);
 
   const { vendor_id } = useParams();
   const searchParams = useSearchParams();
   const name = searchParams.get('name') || '-';
   const phone = searchParams.get('phone') || '-';
   const business_name = searchParams.get('business_name') || '-';
-
-  // Lookup table for TSB and CID calculations
-  const tsbCidLookup: Record<string, (pbAmt: number, dcAmt: number) => { tsb: number; cid: number }> = {
-    'COD_COD': (pbAmt, dcAmt) => ({ tsb: pbAmt, cid: pbAmt + dcAmt }),
-    'COD_Prepaid': (pbAmt, dcAmt) => ({ tsb: pbAmt, cid: pbAmt }),
-    'COD_Due': (pbAmt, dcAmt) => ({ tsb: pbAmt - dcAmt, cid: pbAmt }),
-    'Prepaid_COD': (pbAmt, dcAmt) => ({ tsb: 0, cid: dcAmt }),
-    'Prepaid_Prepaid': (pbAmt, dcAmt) => ({ tsb: 0, cid: 0 }),
-    'Prepaid_Due': (pbAmt, dcAmt) => ({ tsb: -dcAmt, cid: 0 }),
-    'Due_COD': (pbAmt, dcAmt) => ({ tsb: -pbAmt, cid: dcAmt }),
-    'Due_Prepaid': (pbAmt, dcAmt) => ({ tsb: -pbAmt, cid: 0 }),
-    'Due_Due': (pbAmt, dcAmt) => ({ tsb: -pbAmt - dcAmt, cid: 0 }),
-  };
-
-  // Function to calculate TSB and CID based on pb and dc
-  const calculateTSBandCID = (record: DeliveryRecord) => {
-    const pb = record.pb || '';
-    const dc = record.dc || '';
-    const pbAmt = record.pb_amt || 0;
-    const dcAmt = record.dc_amt || 0;
-
-    const key = `${pb}_${dc}`;
-    const calculator = tsbCidLookup[key] || (() => ({ tsb: 0, cid: 0 }));
-    return calculator(pbAmt, dcAmt);
-  };
-
-  // Function to calculate Product Bill
-  const calculateProductBill = (pb: string | null, pbAmt: number | null) => {
-    if (!pb || !pbAmt) return '-';
-    if (pb === 'Prepaid') return 0;
-    if (pb === 'Due') return -pbAmt;
-    if (pb === 'COD') return pbAmt;
-    return '-';
-  };
-
-  // Function to calculate Delivery Amt
-  const calculateDeliveryAmt = (dc: string | null, dcAmt: number | null) => {
-    if (!dc || !dcAmt) return '-';
-    return `${dcAmt} (${dc})`;
-  };
-
-  // Function to create Description
-  const createDescription = (name: string | null, address: string | null, mobile: string | null) => {
-    return [name, address, mobile].filter(Boolean).join(', ') || '-';
-  };
 
   useEffect(() => {
     const fetchDeliveryRecords = async () => {
@@ -618,19 +89,7 @@ export default function DeliveryRecordsPage() {
             throw new Error(data.error || 'Failed to fetch delivery records');
           }
         } else {
-          // Enhance records with calculated fields
-          const enhancedRecords: EnhancedDeliveryRecord[] = data.deliveryRecords.map((record: DeliveryRecord) => {
-            const { tsb, cid } = calculateTSBandCID(record);
-            return {
-              ...record,
-              calculatedTsb: tsb,
-              calculatedCid: cid,
-              productBill: calculateProductBill(record.pb, record.pb_amt),
-              deliveryAmt: calculateDeliveryAmt(record.dc, record.dc_amt),
-              description: createDescription(record.name, record.address, record.mobile),
-            };
-          });
-
+          const enhancedRecords = balanceCalculation(data.deliveryRecords);
           setRecords(enhancedRecords);
           setTotalBalance(enhancedRecords.reduce((sum, record) => sum + record.calculatedTsb, 0));
           setError(null);
@@ -645,14 +104,39 @@ export default function DeliveryRecordsPage() {
     fetchDeliveryRecords();
   }, [vendor_id]);
 
+  // Filter records for card view (no sorting, rely on backend)
+  const filteredRecords = records.filter((record) =>
+    Object.values(record).some((value) =>
+      String(value || '').toLowerCase().includes(globalFilter.toLowerCase())
+    )
+  );
+
+  const cardPageCount = Math.ceil(filteredRecords.length / cardPageSize);
+  const paginatedRecords = filteredRecords.slice(
+    cardPageIndex * cardPageSize,
+    (cardPageIndex + 1) * cardPageSize
+  );
+
+  // Toggle card expansion
+  const toggleCard = (order_id: string) => {
+    setExpandedCards((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(order_id)) {
+        newSet.delete(order_id);
+      } else {
+        newSet.add(order_id);
+      }
+      return newSet;
+    });
+  };
+
+  // Table setup for large screens (no sorting)
   const table = useReactTable({
     data: records,
     columns,
-    onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
     globalFilterFn: (row, _columnId, filterValue) => {
@@ -661,7 +145,6 @@ export default function DeliveryRecordsPage() {
       );
     },
     state: {
-      sorting,
       columnFilters,
       columnVisibility,
       globalFilter,
@@ -669,10 +152,10 @@ export default function DeliveryRecordsPage() {
   });
 
   return (
-    <ScrollArea>
-      <div className="w-[100vw] md:w-full h-[calc(100svh-4rem)]">
-        <div className="mx-auto p-4">
-          <div className='flex gap-4 w-full'>
+    <div className="w-full">
+      <ScrollArea>
+        <div className="h-[calc(100svh-5rem)] p-4">
+          <div className="flex flex-col sm:flex-row gap-4 w-full">
             <Card className="mb-2 w-80">
               <CardContent className="flex flex-col gap-2">
                 <CardTitle>Total Balance</CardTitle>
@@ -684,22 +167,56 @@ export default function DeliveryRecordsPage() {
             <Card className="mb-2 w-full">
               <CardContent className="flex flex-col gap-2">
                 <CardTitle>Vendor Details</CardTitle>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="grid grid-cols-3 gap-4">
                   <div>
                     <CardDescription className="text-sm font-medium">Name</CardDescription>
-                    <p className="text-lg">{name}</p>
+                    <p className="lg:text-lg">{name}</p>
                   </div>
                   <div>
                     <CardDescription className="text-sm font-medium">Phone</CardDescription>
-                    <p className="text-lg">{phone}</p>
+                    <p className="lg:text-lg">{phone}</p>
                   </div>
                   <div>
                     <CardDescription className="text-sm font-medium">Business Name</CardDescription>
-                    <p className="text-lg">{business_name}</p>
+                    <p className="lg:text-lg">{business_name}</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
+          </div>
+
+          <div className="flex items-center py-4">
+            <Input
+              placeholder="Search..."
+              value={globalFilter}
+              onChange={(event) => setGlobalFilter(event.target.value)}
+              className="max-w-sm ml-1"
+            />
+            {/* Column visibility dropdown for table view */}
+            <div className="hidden md:block ml-auto">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline">
+                    Columns <ChevronDown className="ml-2 h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {table
+                    .getAllColumns()
+                    .filter((column) => column.getCanHide())
+                    .map((column) => (
+                      <DropdownMenuCheckboxItem
+                        key={column.id}
+                        className="capitalize"
+                        checked={column.getIsVisible()}
+                        onCheckedChange={(value) => column.toggleVisibility(!!value)}
+                      >
+                        {column.id}
+                      </DropdownMenuCheckboxItem>
+                    ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
 
           {loading && (
@@ -713,93 +230,148 @@ export default function DeliveryRecordsPage() {
             </div>
           )}
           {!loading && !error && (
-            <div className="w-full">
-              <div className="flex items-center py-4">
-                <Input
-                  placeholder="Search..."
-                  value={globalFilter}
-                  onChange={(event) => setGlobalFilter(event.target.value)}
-                  className="max-w-sm ml-1"
-                />
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" className="ml-auto">
-                      Columns <ChevronDown className="ml-2 h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    {table
-                      .getAllColumns()
-                      .filter((column) => column.getCanHide())
-                      .map((column) => (
-                        <DropdownMenuCheckboxItem
-                          key={column.id}
-                          className="capitalize"
-                          checked={column.getIsVisible()}
-                          onCheckedChange={(value) => column.toggleVisibility(!!value)}
+            <>
+              {/* Card view for small screens */}
+              <div className="lg:hidden space-y-4">
+                {paginatedRecords.length ? (
+                  paginatedRecords.map((record) => {
+                    const isExpanded = expandedCards.has(record.order_id);
+                    return (
+                      <Card key={record.order_id} className="w-full">
+                        <CardHeader
+                          className="flex flex-row items-center justify-between cursor-pointer px-4"
+                          onClick={() => toggleCard(record.order_id)}
                         >
-                          {column.id}
-                        </DropdownMenuCheckboxItem>
-                      ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                          <div className="flex flex-col">
+                            <CardTitle className="text-base">
+                              {record.date ? format(new Date(record.date), 'dd MMM, yyyy') : '-'}
+                            </CardTitle>
+                            <p className="text-xs text-gray-500">{record.description}</p>
+                          </div>
+                          <div className="flex items-center gap-4 min-w-fit ">
+                            <div className="text-right">
+                              <p className="text-xs font-medium">TSB: ₹{record.calculatedTsb.toFixed(2)}</p>
+                              <p className="text-xs font-medium">Balance: ₹{record.runningBalance.toFixed(2)}</p>
+                            </div>
+                            {isExpanded ? (
+                              <ChevronUp className="h-5 w-5" />
+                            ) : (
+                              <ChevronDown className="h-5 w-5" />
+                            )}
+                          </div>
+                        </CardHeader>
+                        {isExpanded && (
+                          <CardContent>
+                            <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                <p className="text-xs font-medium">Order ID</p>
+                                <p className="text-xs">{record.order_id}</p>
+                              </div>
+                              <div>
+                                <p className="text-xs font-medium">Mode</p>
+                                <p className="text-xs">{record.mode || '-'}</p>
+                              </div>
+                              <div>
+                                <p className="text-xs font-medium">Product Bill</p>
+                                <p className="text-xs">{record.productBill}</p>
+                              </div>
+                              <div>
+                                <p className="text-xs font-medium">Delivery Amount</p>
+                                <p className="text-xs">{record.deliveryAmt}</p>
+                              </div>
+                              <div>
+                                <p className="text-xs font-medium">Status</p>
+                                <Badge variant={record.status === 'Delivered' ? 'default' : 'secondary'}>
+                                  {record.status || '-'}
+                                </Badge>
+                              </div>
+                              <div>
+                                <p className="text-xs font-medium">Notes</p>
+                                <p className="text-xs">{record.note || '-'}</p>
+                              </div>
+                            </div>
+                          </CardContent>
+                        )}
+                      </Card>
+                    );
+                  })
+                ) : (
+                  <Card>
+                    <CardContent className="text-center py-6">
+                      No results.
+                    </CardContent>
+                  </Card>
+                )}
               </div>
-              <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
-                    {table.getHeaderGroups().map((headerGroup) => (
-                      <TableRow key={headerGroup.id}>
-                        {headerGroup.headers.map((header) => (
-                          <TableHead key={header.id}>
-                            {header.isPlaceholder
-                              ? null
-                              : flexRender(header.column.columnDef.header, header.getContext())}
-                          </TableHead>
-                        ))}
-                      </TableRow>
-                    ))}
-                  </TableHeader>
-                  <TableBody>
-                    {table.getRowModel().rows?.length ? (
-                      table.getRowModel().rows.map((row) => (
-                        <TableRow key={row.id}>
-                          {row.getVisibleCells().map((cell) => (
-                            <TableCell key={cell.id}>
-                              {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                            </TableCell>
+
+              {/* Table view for large screens */}
+              <div className="hidden lg:block">
+                <Card>
+                  <CardContent>
+                    <div className="rounded-md border">
+                      <Table>
+                        <TableHeader>
+                          {table.getHeaderGroups().map((headerGroup) => (
+                            <TableRow key={headerGroup.id}>
+                              {headerGroup.headers.map((header) => (
+                                <TableHead key={header.id}>
+                                  {header.isPlaceholder
+                                    ? null
+                                    : flexRender(header.column.columnDef.header, header.getContext())}
+                                </TableHead>
+                              ))}
+                            </TableRow>
                           ))}
-                        </TableRow>
-                      ))
-                    ) : (
-                      <TableRow>
-                        <TableCell colSpan={columns.length} className="h-24 text-center">
-                          No results.
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
+                        </TableHeader>
+                        <TableBody>
+                          {table.getRowModel().rows?.length ? (
+                            table.getRowModel().rows.map((row) => (
+                              <TableRow key={row.id}>
+                                {row.getVisibleCells().map((cell) => (
+                                  <TableCell key={cell.id} className="max-w-60 whitespace-normal break-words">
+                                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                  </TableCell>
+                                ))}
+                              </TableRow>
+                            ))
+                          ) : (
+                            <TableRow>
+                              <TableCell colSpan={columns.length} className="h-24 text-center">
+                                No results.
+                              </TableCell>
+                            </TableRow>
+                          )}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
+
+              {/* Pagination for both views */}
               <div className="flex items-center justify-between px-4 mt-3">
                 <div className="text-muted-foreground hidden flex-1 text-sm lg:flex">
-                  {table.getFilteredRowModel().rows.length} row(s) displayed.
+                  {filteredRecords.length} record(s) displayed.
                 </div>
                 <div className="flex w-full items-center gap-8 lg:w-fit">
                   <div className="items-center gap-2 flex">
                     <Label htmlFor="rows-per-page" className="text-sm font-medium hidden sm:flex">
-                      Rows per page
+                      Records per page
                     </Label>
                     <Select
                       value={`${table.getState().pagination.pageSize}`}
-                      onValueChange={(value) => table.setPageSize(Number(value))}
+                      onValueChange={(value) => {
+                        table.setPageSize(Number(value));
+                        setCardPageSize(Number(value));
+                      }}
                     >
                       <SelectTrigger size="sm" className="w-20" id="rows-per-page">
                         <SelectValue placeholder={table.getState().pagination.pageSize} />
                       </SelectTrigger>
                       <SelectContent side="top">
-                        {[10, 15, 20, 30, 40, 50].map((pageSize) => (
-                          <SelectItem key={pageSize} value={`${pageSize}`}>
-                            {pageSize}
+                        {[10, 15, 20, 30, 40, 50].map((size) => (
+                          <SelectItem key={size} value={`${size}`}>
+                            {size}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -812,8 +384,11 @@ export default function DeliveryRecordsPage() {
                     <Button
                       variant="outline"
                       className="hidden h-8 w-8 p-0 lg:flex"
-                      onClick={() => table.setPageIndex(0)}
-                      disabled={!table.getCanPreviousPage()}
+                      onClick={() => {
+                        table.setPageIndex(0);
+                        setCardPageIndex(0);
+                      }}
+                      disabled={!table.getCanPreviousPage() && cardPageIndex === 0}
                     >
                       <span className="sr-only">Go to first page</span>
                       <IconChevronsLeft />
@@ -822,8 +397,11 @@ export default function DeliveryRecordsPage() {
                       variant="outline"
                       className="size-8"
                       size="icon"
-                      onClick={() => table.previousPage()}
-                      disabled={!table.getCanPreviousPage()}
+                      onClick={() => {
+                        table.previousPage();
+                        setCardPageIndex((prev) => prev - 1);
+                      }}
+                      disabled={!table.getCanPreviousPage() && cardPageIndex === 0}
                     >
                       <span className="sr-only">Go to previous page</span>
                       <IconChevronLeft />
@@ -832,8 +410,11 @@ export default function DeliveryRecordsPage() {
                       variant="outline"
                       className="size-8"
                       size="icon"
-                      onClick={() => table.nextPage()}
-                      disabled={!table.getCanNextPage()}
+                      onClick={() => {
+                        table.nextPage();
+                        setCardPageIndex((prev) => prev + 1);
+                      }}
+                      disabled={!table.getCanNextPage() && cardPageIndex >= cardPageCount - 1}
                     >
                       <span className="sr-only">Go to next page</span>
                       <IconChevronRight />
@@ -842,8 +423,11 @@ export default function DeliveryRecordsPage() {
                       variant="outline"
                       className="hidden size-8 lg:flex"
                       size="icon"
-                      onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-                      disabled={!table.getCanNextPage()}
+                      onClick={() => {
+                        table.setPageIndex(table.getPageCount() - 1);
+                        setCardPageIndex(cardPageCount - 1);
+                      }}
+                      disabled={!table.getCanNextPage() && cardPageIndex >= cardPageCount - 1}
                     >
                       <span className="sr-only">Go to last page</span>
                       <IconChevronsRight />
@@ -851,10 +435,10 @@ export default function DeliveryRecordsPage() {
                   </div>
                 </div>
               </div>
-            </div>
+            </>
           )}
         </div>
-      </div>
-    </ScrollArea>
+      </ScrollArea>
+    </div>
   );
 }

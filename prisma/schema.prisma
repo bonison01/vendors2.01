@@ -482,9 +482,10 @@ model delivery_rec {
   cid         Int?
   status      String?
   note        String?
-  order_id    String    @id
+  order_id    String    @unique
   vendor_id   Int?
   delivery_id Int?
+  id          Int       @id @default(autoincrement())
 
   @@schema("public")
 }

@@ -28,12 +28,13 @@ export async function GET(request: NextRequest) {
 
     const { vendor_id } = parsedQuery.data;
 
-    // Fetch delivery records by vendor_id
+    // Fetch delivery records by vendor_id, sorted by id descending
     const deliveryRecords = await prisma.delivery_rec.findMany({
       where: {
         vendor_id: vendor_id,
       },
       select: {
+        id: true,
         date: true,
         name: true,
         address: true,
@@ -52,6 +53,9 @@ export async function GET(request: NextRequest) {
         order_id: true,
         vendor_id: true,
         delivery_id: true,
+      },
+      orderBy: {
+        id: 'desc',
       },
     });
 

@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { z } from 'zod';
 import { format } from 'date-fns';
 import {
@@ -49,6 +49,7 @@ import {
   IconLayoutColumns,
   IconLoader,
 } from '@tabler/icons-react';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -88,10 +89,11 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { PackageX, PackageCheck, Bike, FileDown } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import { useIsMobile } from '@/hooks/use-mobile';
-
+import { Input } from '@/components/ui/input';
 
 // Schema for DataTable
 export const schema = z.object({
@@ -395,7 +397,7 @@ export function TableCellViewer({ item }: { item: z.infer<typeof schema> }) {
   return (
     <Drawer direction={isMobile ? 'bottom' : 'right'}>
       <DrawerTrigger asChild>
-        <Button variant="link" className="text-foreground w-fit px-0 text-left">
+        <Button variant="link" className="text-green-500 underline w-fit px-0 text-left">
           {item.order_id}
         </Button>
       </DrawerTrigger>
@@ -629,9 +631,9 @@ export function DraggableRow({ row }: { row: any }) {
   );
 }
 
-
 // DataTable Component
 export function DataTable({ data }: { data: z.infer<typeof schema>[] }) {
+  const [globalFilter, setGlobalFilter] = useState('');
   const [rowSelection, setRowSelection] = React.useState({});
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
@@ -641,6 +643,7 @@ export function DataTable({ data }: { data: z.infer<typeof schema>[] }) {
     pageSize: 15,
   });
   const [tableData, setTableData] = React.useState(data);
+  const [expandedCards, setExpandedCards] = React.useState<Set<string>>(new Set());
   const sortableId = React.useId();
   const sensors = useSensors(
     useSensor(MouseSensor, {}),
@@ -662,6 +665,7 @@ export function DataTable({ data }: { data: z.infer<typeof schema>[] }) {
       rowSelection,
       columnFilters,
       pagination,
+      globalFilter,
     },
     getRowId: (row) => row.id.toString(),
     enableRowSelection: true,
@@ -670,13 +674,32 @@ export function DataTable({ data }: { data: z.infer<typeof schema>[] }) {
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
     onPaginationChange: setPagination,
+    onGlobalFilterChange: setGlobalFilter,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFacetedRowModel: getFacetedRowModel(),
     getFacetedUniqueValues: getFacetedUniqueValues(),
+    globalFilterFn: (row, _columnId, filterValue) => {
+      return Object.values(row.original).some((value) =>
+        String(value || '').toLowerCase().includes(String(filterValue || '').toLowerCase())
+      );
+    },
   });
+
+  // Toggle card expansion
+  const toggleCard = (id: string) => {
+    setExpandedCards((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) {
+        newSet.delete(id);
+      } else {
+        newSet.add(id);
+      }
+      return newSet;
+    });
+  };
 
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
@@ -713,9 +736,23 @@ export function DataTable({ data }: { data: z.infer<typeof schema>[] }) {
     });
   };
 
+  // Card view pagination
+  const filteredRows = table.getFilteredRowModel().rows.map((row) => row.original);
+  const cardPageCount = Math.ceil(filteredRows.length / table.getState().pagination.pageSize);
+  const paginatedRows = filteredRows.slice(
+    table.getState().pagination.pageIndex * table.getState().pagination.pageSize,
+    (table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize
+  );
+
   return (
     <>
-      <div className="flex items-center justify-end my-2">
+      <div className="flex items-center justify-between gap-4 my-2">
+        <Input
+          placeholder="Search..."
+          value={globalFilter}
+          onChange={(event) => setGlobalFilter(event.target.value)}
+          className="max-w-sm ml-1"
+        />
         <div className="flex flex-col sm:flex-row items-end gap-2">
           {Object.keys(rowSelection).length > 0 && (
             <div className="flex flex-row gap-2">
@@ -754,7 +791,123 @@ export function DataTable({ data }: { data: z.infer<typeof schema>[] }) {
           </DropdownMenu>
         </div>
       </div>
-      <div className="overflow-hidden rounded-lg border">
+
+      {/* Card view for small screens */}
+      <div className="md:hidden space-y-4">
+        {paginatedRows.length ? (
+          paginatedRows.map((row) => {
+            const isExpanded = expandedCards.has(row.id.toString());
+            return (
+              <Card key={row.id} className="w-full">
+                <CardHeader
+                  className="flex flex-row items-center justify-between cursor-pointer"
+                  onClick={() => toggleCard(row.id.toString())}
+                >
+                  <div className="flex flex-col">
+                    <CardTitle className="text-lg">
+                      <TableCellViewer item={row} />
+                    </CardTitle>
+                    <p className="text-sm font-medium">
+                      {format(new Date(row.order_at), 'dd MMM, yyyy')}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div className="text-right">
+                      <Badge variant="outline" className="text-muted-foreground px-1.5 w-fit">
+                        {row.status === 'ordered' ? (
+                          <IconCircleCheckFilled className="fill-green-500 dark:fill-blue-400 mr-1" />
+                        ) : (
+                          <IconLoader className="mr-1" />
+                        )}
+                        {row.status}
+                      </Badge>
+                      <p className="text-sm font-medium">Total Price: ₹{row.total_calculated_price}</p>
+                    </div>
+                    {isExpanded ? (
+                      <ChevronUp className="h-5 w-5" />
+                    ) : (
+                      <ChevronDown className="h-5 w-5" />
+                    )}
+                  </div>
+                </CardHeader>
+                {isExpanded && (
+                  <CardContent>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <p className="font-medium">Account Name</p>
+                        <p>{row.customers.name || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <p className="font-medium">Account Phone</p>
+                        <p>{row.customers.phone || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <p className="font-medium">Account Email</p>
+                        <p>{row.customers.email || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <p className="font-medium">Buyer Name</p>
+                        <p>{row.buyer_name || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <p className="font-medium">Buyer Address</p>
+                        <p>{row.buyer_address || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <p className="font-medium">Buyer Phone</p>
+                        <p>{row.buyer_phone || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <p className="font-medium">Buyer Email</p>
+                        <p>{row.email || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <p className="font-medium">Landmark</p>
+                        <p>{row.landmark || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <p className="font-medium">Item Count</p>
+                        <p>{row.item_count || 'N/A'}</p>
+                      </div>
+                      <div className="col-span-2">
+                        <p className="font-medium">Stores and Items</p>
+                        {row.stores?.length ? (
+                          row.stores.map((store) => (
+                            <div key={store.store_id} className="mt-2">
+                              <p className="font-semibold">
+                                {store.business_name} - {store.phone || 'N/A'}
+                              </p>
+                              <ol className="list-decimal ml-6">
+                                {store.items.map((item) => (
+                                  <li key={`${row.order_id}-${item.product_id}`} className="mb-1">
+                                    {item.product_name} (Qty: {item.quantity}, Price: ₹
+                                    {item.discounted_price})
+                                  </li>
+                                ))}
+                              </ol>
+                            </div>
+                          ))
+                        ) : (
+                          <p>No items available</p>
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                )}
+              </Card>
+            );
+          })
+        ) : (
+          <Card>
+            <CardContent className="text-center py-6">
+              No results.
+            </CardContent>
+          </Card>
+        )}
+      </div>
+
+      {/* Table view for large screens */}
+      <div className="hidden md:block overflow-hidden rounded-lg border">
         <DndContext
           collisionDetection={closestCenter}
           modifiers={[restrictToVerticalAxis]}
@@ -794,12 +947,14 @@ export function DataTable({ data }: { data: z.infer<typeof schema>[] }) {
           </Table>
         </DndContext>
       </div>
-      <div className="flex items-center justify-between px-4">
+
+      {/* Pagination for both views */}
+      <div className="flex items-center justify-between px-4 mt-3">
         <div className="text-muted-foreground hidden flex-1 text-sm lg:flex">
           {table.getFilteredSelectedRowModel().rows.length} of{' '}
           {table.getFilteredRowModel().rows.length} row(s) selected.
         </div>
-        <div className="flex w-full items-center gap-8 lg:w-fit mt-3">
+        <div className="flex w-full items-center gap-8 lg:w-fit">
           <div className="items-center gap-2 flex">
             <Label htmlFor="rows-per-page" className="text-sm font-medium hidden sm:flex">
               Rows per page
