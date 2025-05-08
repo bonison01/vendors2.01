@@ -166,19 +166,19 @@ export default function DeliveryRecordsPage() {
             </Card>
             <Card className="mb-2 w-full">
               <CardContent className="flex flex-col gap-2">
-                <CardTitle>Vendor Details</CardTitle>
+                <CardTitle className='text-green-500 border-b border-green-500/50 pb-1 max-w-50'>Vendor Details</CardTitle>
                 <div className="grid grid-cols-3 gap-4">
                   <div>
                     <CardDescription className="text-sm font-medium">Name</CardDescription>
-                    <p className="lg:text-lg">{name}</p>
+                    <p className="lg:text-base">{name}</p>
                   </div>
                   <div>
                     <CardDescription className="text-sm font-medium">Phone</CardDescription>
-                    <p className="lg:text-lg">{phone}</p>
+                    <p className="lg:text-base">{phone}</p>
                   </div>
                   <div>
                     <CardDescription className="text-sm font-medium">Business Name</CardDescription>
-                    <p className="lg:text-lg">{business_name}</p>
+                    <p className="lg:text-base">{business_name}</p>
                   </div>
                 </div>
               </CardContent>
@@ -308,42 +308,40 @@ export default function DeliveryRecordsPage() {
               <div className="hidden lg:block">
                 <Card>
                   <CardContent>
-                    <div className="rounded-md border">
-                      <Table>
-                        <TableHeader>
-                          {table.getHeaderGroups().map((headerGroup) => (
-                            <TableRow key={headerGroup.id}>
-                              {headerGroup.headers.map((header) => (
-                                <TableHead key={header.id}>
-                                  {header.isPlaceholder
-                                    ? null
-                                    : flexRender(header.column.columnDef.header, header.getContext())}
-                                </TableHead>
+                    <Table>
+                      <TableHeader className='bg-zinc-700/50'>
+                        {table.getHeaderGroups().map((headerGroup) => (
+                          <TableRow key={headerGroup.id}>
+                            {headerGroup.headers.map((header) => (
+                              <TableHead key={header.id}>
+                                {header.isPlaceholder
+                                  ? null
+                                  : flexRender(header.column.columnDef.header, header.getContext())}
+                              </TableHead>
+                            ))}
+                          </TableRow>
+                        ))}
+                      </TableHeader>
+                      <TableBody>
+                        {table.getRowModel().rows?.length ? (
+                          table.getRowModel().rows.map((row) => (
+                            <TableRow key={row.id}>
+                              {row.getVisibleCells().map((cell) => (
+                                <TableCell key={cell.id} className="max-w-60 whitespace-normal break-words">
+                                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                </TableCell>
                               ))}
                             </TableRow>
-                          ))}
-                        </TableHeader>
-                        <TableBody>
-                          {table.getRowModel().rows?.length ? (
-                            table.getRowModel().rows.map((row) => (
-                              <TableRow key={row.id}>
-                                {row.getVisibleCells().map((cell) => (
-                                  <TableCell key={cell.id} className="max-w-60 whitespace-normal break-words">
-                                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                                  </TableCell>
-                                ))}
-                              </TableRow>
-                            ))
-                          ) : (
-                            <TableRow>
-                              <TableCell colSpan={columns.length} className="h-24 text-center">
-                                No results.
-                              </TableCell>
-                            </TableRow>
-                          )}
-                        </TableBody>
-                      </Table>
-                    </div>
+                          ))
+                        ) : (
+                          <TableRow>
+                            <TableCell colSpan={columns.length} className="h-24 text-center">
+                              No results.
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
                   </CardContent>
                 </Card>
               </div>

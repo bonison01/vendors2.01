@@ -34,7 +34,7 @@ export function SiteHeader() {
         />
         <h1 className="text-base font-medium">{getTitle()}</h1>
         <div className="ml-auto flex items-center gap-2">
-          <Button variant="link" asChild size="sm" className="hidden sm:flex ">
+          <Button variant="link" asChild size="sm">
             <a
               href="https://justmateng.com"
               rel="noopener noreferrer"

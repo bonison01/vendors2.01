@@ -49,7 +49,15 @@ import {
 import { columns } from '@/components/table/delivery-columns';
 import { EnhancedDeliveryRecord } from '@/types/delivery-record';
 import { balanceCalculation } from '@/lib/balanceCalculation';
-import { format } from 'date-fns'
+import { format, addDays, startOfMonth, subMonths, startOfWeek } from 'date-fns';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import * as XLSX from 'xlsx';
 
 export default function DeliveryRecordsPage() {
   const [records, setRecords] = useState<EnhancedDeliveryRecord[]>([]);
@@ -62,6 +70,12 @@ export default function DeliveryRecordsPage() {
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
   const [cardPageIndex, setCardPageIndex] = useState(0);
   const [cardPageSize, setCardPageSize] = useState(10);
+  const [startDate, setStartDate] = useState(format(startOfMonth(new Date()), 'yyyy-MM-dd'));
+  const [endDate, setEndDate] = useState(format(addDays(new Date(), 1), 'yyyy-MM-dd'));
+  const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
+  const [selectedRange, setSelectedRange] = useState<string>('thisMonth');
+  const [customStartDate, setCustomStartDate] = useState<string>('');
+  const [customEndDate, setCustomEndDate] = useState<string>('');
 
   const vendor_id = useAppSelector((state) => state.user.user?.vendor_id);
 
@@ -100,7 +114,7 @@ export default function DeliveryRecordsPage() {
     fetchDeliveryRecords();
   }, [vendor_id]);
 
-  // Filter records for card view (no sorting, rely on backend)
+  // Filter records for card view and export
   const filteredRecords = records.filter((record) =>
     Object.values(record).some((value) =>
       String(value || '').toLowerCase().includes(globalFilter.toLowerCase())
@@ -126,7 +140,7 @@ export default function DeliveryRecordsPage() {
     });
   };
 
-  // Table setup for large screens (no sorting)
+  // Table setup for large screens
   const table = useReactTable({
     data: records,
     columns,
@@ -147,13 +161,97 @@ export default function DeliveryRecordsPage() {
     },
   });
 
+  // Handle date range selection and export
+  const handleExport = () => {
+    let start: Date;
+    let end: Date = addDays(new Date(), 1); // Include today
+
+    switch (selectedRange) {
+      case 'today':
+        start = new Date();
+        end = addDays(new Date(), 1);
+        break;
+      case 'thisWeek':
+        start = startOfWeek(new Date(), { weekStartsOn: 1 }); // Monday
+        break;
+      case 'thisMonth':
+        start = startOfMonth(new Date());
+        break;
+      case 'last3Months':
+        start = subMonths(new Date(), 3);
+        break;
+      case 'last6Months':
+        start = subMonths(new Date(), 6);
+        break;
+      case 'oneYear':
+        start = subMonths(new Date(), 12);
+        break;
+      case 'custom':
+        if (!customStartDate || !customEndDate) {
+          alert('Please select both start and end dates for custom range.');
+          return;
+        }
+        start = new Date(customStartDate);
+        end = new Date(customEndDate);
+        if (start > end) {
+          alert('Start date cannot be after end date.');
+          return;
+        }
+        end = addDays(end, 1); // Include end date
+        break;
+      default:
+        start = startOfMonth(new Date());
+    }
+
+    // Filter records by date range, excluding records with null dates
+    const filteredByDate = filteredRecords.filter((record) => {
+      if (!record.date) return false; // Skip records with null dates
+      const recordDate = new Date(record.date);
+      return recordDate >= start && recordDate < end;
+    });
+
+    if (filteredByDate.length === 0) {
+      alert('No records found for the selected date range.');
+      return;
+    }
+
+    // Prepare data for Excel with raw values
+    const exportData = filteredByDate.map((record) => ({
+      date: record.date || '-',
+      order_id: record.order_id,
+      name: record.name || '-',
+      address: record.address || '-',
+      mobile: record.mobile || '-',
+      mode: record.mode || '-',
+      pb: record.pb || '-',
+      dc: record.dc || '-',
+      pb_amt: record.pb_amt || '-',
+      dc_amt: record.dc_amt || '-',
+      tsb: record.tsb || '-',
+      cid: record.cid || '-',
+      status: record.status || '-',
+      note: record.note || '-',
+      vendor_id: record.vendor_id || '-',
+      runningBalance: record.runningBalance,
+    }));
+
+    // Create worksheet and workbook
+    const worksheet = XLSX.utils.json_to_sheet(exportData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Delivery Records');
+
+    // Download Excel file
+    XLSX.writeFile(workbook, `Delivery_Records_${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
+    setIsExportDialogOpen(false);
+  };
+
   return (
     <div className="w-full">
       <ScrollArea>
         <div className="h-[calc(100svh-5rem)] p-4">
           <div className="flex gap-4 mb-4">
             <Card className="w-80">
-              <CardContent className="flex flex-col gap-2 pt-6">
+              <CardContent className="flex flex-col gap-2">
                 <CardTitle>Total Balance</CardTitle>
                 <p className={`text-3xl font-bold ${totalBalance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                   ₹{totalBalance.toFixed(2)}
@@ -162,13 +260,76 @@ export default function DeliveryRecordsPage() {
             </Card>
           </div>
 
-          <div className="flex items-center py-4">
+          <div className="flex items-center gap-4 py-4">
             <Input
               placeholder="Search..."
               value={globalFilter}
               onChange={(event) => setGlobalFilter(event.target.value)}
               className="max-w-sm ml-1"
             />
+
+            <Dialog open={isExportDialogOpen} onOpenChange={setIsExportDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline">Export to Excel</Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Export Delivery Records</DialogTitle>
+                </DialogHeader>
+                <div className="flex flex-col space-y-4">
+                  <div className='grid gap-3'>
+                    <Label htmlFor="dateRange">Select Date Range</Label>
+                    <Select
+                      value={selectedRange}
+                      onValueChange={(value) => {
+                        setSelectedRange(value);
+                        if (value !== 'custom') {
+                          setCustomStartDate('');
+                          setCustomEndDate('');
+                        }
+                      }}
+                    >
+                      <SelectTrigger id="dateRange">
+                        <SelectValue placeholder="Select range" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="today">Today</SelectItem>
+                        <SelectItem value="thisWeek">This Week</SelectItem>
+                        <SelectItem value="thisMonth">This Month</SelectItem>
+                        <SelectItem value="last3Months">Last 3 Months</SelectItem>
+                        <SelectItem value="last6Months">Last 6 Months</SelectItem>
+                        <SelectItem value="oneYear">One Year</SelectItem>
+                        <SelectItem value="custom">Custom Range</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {selectedRange === 'custom' && (
+                    <div className="space-y-4">
+                      <div className='grid gap-3'>
+                        <Label htmlFor="customStartDate">Start Date</Label>
+                        <Input
+                          type="date"
+                          id="customStartDate"
+                          value={customStartDate}
+                          onChange={(e) => setCustomStartDate(e.target.value)}
+                        />
+                      </div>
+                      <div className='grid gap-3'>
+                        <Label htmlFor="customEndDate">End Date</Label>
+                        <Input
+                          type="date"
+                          id="customEndDate"
+                          value={customEndDate}
+                          onChange={(e) => setCustomEndDate(e.target.value)}
+                        />
+                      </div>
+                    </div>
+                  )}
+                  <Button onClick={handleExport} className='text-white ml-auto'>Export</Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+
             {/* Column visibility dropdown for table view */}
             <div className="hidden md:block ml-auto">
               <DropdownMenu>
@@ -285,42 +446,40 @@ export default function DeliveryRecordsPage() {
               <div className="hidden lg:block">
                 <Card>
                   <CardContent>
-                    <div className="rounded-md border">
-                      <Table>
-                        <TableHeader>
-                          {table.getHeaderGroups().map((headerGroup) => (
-                            <TableRow key={headerGroup.id}>
-                              {headerGroup.headers.map((header) => (
-                                <TableHead key={header.id}>
-                                  {header.isPlaceholder
-                                    ? null
-                                    : flexRender(header.column.columnDef.header, header.getContext())}
-                                </TableHead>
+                    <Table>
+                      <TableHeader>
+                        {table.getHeaderGroups().map((headerGroup) => (
+                          <TableRow key={headerGroup.id}>
+                            {headerGroup.headers.map((header) => (
+                              <TableHead key={header.id}>
+                                {header.isPlaceholder
+                                  ? null
+                                  : flexRender(header.column.columnDef.header, header.getContext())}
+                              </TableHead>
+                            ))}
+                          </TableRow>
+                        ))}
+                      </TableHeader>
+                      <TableBody>
+                        {table.getRowModel().rows?.length ? (
+                          table.getRowModel().rows.map((row) => (
+                            <TableRow key={row.id}>
+                              {row.getVisibleCells().map((cell) => (
+                                <TableCell key={cell.id} className="max-w-60 whitespace-normal break-words">
+                                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                </TableCell>
                               ))}
                             </TableRow>
-                          ))}
-                        </TableHeader>
-                        <TableBody>
-                          {table.getRowModel().rows?.length ? (
-                            table.getRowModel().rows.map((row) => (
-                              <TableRow key={row.id}>
-                                {row.getVisibleCells().map((cell) => (
-                                  <TableCell key={cell.id} className="max-w-60 whitespace-normal break-words">
-                                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                                  </TableCell>
-                                ))}
-                              </TableRow>
-                            ))
-                          ) : (
-                            <TableRow>
-                              <TableCell colSpan={columns.length} className="h-24 text-center">
-                                No results.
-                              </TableCell>
-                            </TableRow>
-                          )}
-                        </TableBody>
-                      </Table>
-                    </div>
+                          ))
+                        ) : (
+                          <TableRow>
+                            <TableCell colSpan={columns.length} className="h-24 text-center">
+                              No results.
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
                   </CardContent>
                 </Card>
               </div>
@@ -328,7 +487,7 @@ export default function DeliveryRecordsPage() {
               {/* Pagination for both views */}
               <div className="flex items-center justify-between px-4 mt-3">
                 <div className="text-muted-foreground hidden flex-1 text-sm lg:flex">
-                  {filteredRecords.length} record(s) displayed.
+                  {filteredRecords.length} record(s) found.
                 </div>
                 <div className="flex w-full items-center gap-8 lg:w-fit">
                   <div className="items-center gap-2 flex">

@@ -278,11 +278,11 @@ export default function AddProductPage() {
     <ScrollArea>
       <div className="w-full h-[calc(100svh-4rem)]">
         <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6 px-4 md:px-6">
-          <div className="flex justify-between items-center">
+          <div className="flex flex-col lg:flex-row justify-between lg:items-center gap-4">
             <h2 className="text-2xl font-semibold">Add New Product</h2>
-            <div className="flex gap-2">
-              <Button className='text-white' onClick={downloadSampleExcel}>Download Sample Excel</Button>
-              <Button className='text-white' asChild>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <Button className='text-white w-fit' onClick={downloadSampleExcel}>Download Sample Excel</Button>
+              <Button className='text-white w-fit' asChild>
                 <label>
                   Upload Excel
                   <Input
@@ -293,7 +293,7 @@ export default function AddProductPage() {
                   />
                 </label>
               </Button>
-              <Button className='text-white' onClick={() => setAddOpen(true)}>Add Product</Button>
+              <Button className='text-white w-fit' onClick={() => setAddOpen(true)}>Add Product</Button>
             </div>
           </div>
 

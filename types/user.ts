@@ -4,6 +4,7 @@ export interface User {
     email: string;
     address: string | null;
     phone: string | null;
+    password: string | null;
     is_business_owner: boolean | null;
     business_name: string | null;
     business_address: string | null;

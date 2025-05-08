@@ -71,6 +71,22 @@ export const columns: ColumnDef<User>[] = [
     cell: ({ row }) => <div>{row.getValue('vendor_id') || '-'}</div>,
   },
   {
+    accessorKey: 'is_business_owner',
+    header: ({ column }) => (
+      <Button
+        variant="ghost"
+        onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+      >
+        Store
+        <ArrowUpDown className="ml-2 h-4 w-4" />
+      </Button>
+    ),
+    cell: ({ row }) => {
+      const value = row.getValue('is_business_owner');
+      return <div>{value === true ? 'True' : value === false ? 'False' : '-'}</div>;
+    },    
+  },
+  {
     id: 'actions',
     enableHiding: false,
     cell: ({ row }) => {
