@@ -18,6 +18,18 @@ export const balanceCalculation = (records: DeliveryRecord[]): EnhancedDeliveryR
     const dc = record.dc || '';
     const pbAmt = record.pb_amt || 0;
     const dcAmt = record.dc_amt || 0;
+    const statusLower = (record.status || '').toLowerCase();
+
+    // For Gpay/Cash records with null pb and dc
+    if (
+      (statusLower.includes('gpay') || statusLower.includes('cash')) &&
+      !record.pb &&
+      !record.dc
+    ) {
+      // Use tsb if available, otherwise use dc_amt if available
+      const tsbValue = record.tsb !== null ? record.tsb : record.dc_amt !== null ? record.dc_amt : 0;
+      return { tsb: tsbValue, cid: 0 };
+    }
 
     const key = `${pb}_${dc}`;
     const calculator = tsbCidLookup[key] || (() => ({ tsb: 0, cid: 0 }));
@@ -41,11 +53,23 @@ export const balanceCalculation = (records: DeliveryRecord[]): EnhancedDeliveryR
     return [name, address, mobile].filter(Boolean).join(', ') || '-';
   };
 
+  const shouldSkipInCalculation = (status: string | null) => {
+    if (!status) return true;
+    const statusLower = status.toLowerCase();
+    return (
+      statusLower.includes('returned') ||
+      statusLower.includes('out for delivery') ||
+      statusLower.includes('cancel') ||
+      statusLower.includes('pending')
+    );
+  };
+
   const enhancedRecords: EnhancedDeliveryRecord[] = records.map((record) => {
     const { tsb, cid } = calculateTSBandCID(record);
+    const skipInCalculation = shouldSkipInCalculation(record.status);
     return {
       ...record,
-      calculatedTsb: tsb,
+      calculatedTsb: skipInCalculation ? 0 : tsb,
       calculatedCid: cid,
       productBill: calculateProductBill(record.pb, record.pb_amt),
       deliveryAmt: calculateDeliveryAmt(record.dc, record.dc_amt),
@@ -63,7 +87,9 @@ export const balanceCalculation = (records: DeliveryRecord[]): EnhancedDeliveryR
   let runningSum = 0;
   const balanceMap = new Map<string, number>();
   sortedByOldest.forEach((record) => {
-    runningSum += record.calculatedTsb;
+    if (!shouldSkipInCalculation(record.status)) {
+      runningSum += record.calculatedTsb;
+    }
     balanceMap.set(record.order_id, runningSum);
   });
 

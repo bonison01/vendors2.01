@@ -81,7 +81,7 @@ export default function DeliveryRecordsPage() {
         setLoading(true);
         const response = await fetch(`/api/parcel/getById?vendor_id=${vendor_id}`);
         const data = await response.json();
-
+        console.log(data)
         if (!response.ok) {
           if (data.message === 'No delivery records found for this vendor_id') {
             setError('No delivery records found');
