@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { z } from 'zod';
-import { format } from 'date-fns';
+import { format, isValid } from 'date-fns';
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -141,7 +141,7 @@ export const schema = z.object({
 export const mapOrderToSchema = (order: any) => ({
   id: order.id,
   order_id: order.order_id,
-  order_at: new Date(order.order_at).toLocaleDateString(),
+  order_at: new Date(order.order_at), // Keep it as a Date object
   status: order.status,
   total_calculated_price: order.total_calculated_price.toString(),
   item_count: order.item_count.toString(),
@@ -159,6 +159,10 @@ export const mapOrderToSchema = (order: any) => ({
     phone: order.customers.phone,
   },
 });
+
+
+// Generate Receipt PDF
+// import { format, isValid } from 'date-fns';
 
 // Generate Receipt PDF
 export const generateReceiptPDF = (orderData: z.infer<typeof schema>) => {
@@ -195,11 +199,16 @@ export const generateReceiptPDF = (orderData: z.infer<typeof schema>) => {
   y += 8;
   doc.text(`Payment Mode: Cash on Delivery`, 20, y);
   y += 8;
-  doc.text(
-    `Order Date: ${format(new Date(orderData.order_at), 'dd MMM, yyyy - h:mm a')}`,
-    20,
-    y
-  );
+
+  // Check if the date is valid before formatting
+  const orderDate = orderData.order_at;
+  let formattedOrderDate = 'Invalid Date';
+
+  if (isValid(orderDate)) {
+    formattedOrderDate = format(orderDate, 'dd MMM, yyyy - h:mm a');
+  }
+
+  doc.text(`Order Date: ${formattedOrderDate}`, 20, y);
   y += 12;
 
   // Calculate totals
@@ -270,6 +279,7 @@ export const generateReceiptPDF = (orderData: z.infer<typeof schema>) => {
     toast.error('Failed to generate receipt');
   }
 };
+
 
 // Generate Items List PDF
 export const generateItemsListPDF = (orders: z.infer<typeof schema>[], filename: string) => {
@@ -405,7 +415,13 @@ export function TableCellViewer({ item }: { item: z.infer<typeof schema> }) {
         <DrawerHeader className="gap-1">
           <div className="w-full flex flex-row justify-between">
             <DrawerTitle>{item.order_id}</DrawerTitle>
-            <DrawerTitle>{format(new Date(item.order_at), 'dd MMM, yy')}</DrawerTitle>
+            <DrawerTitle>
+              {item.order_at && !isNaN(new Date(item.order_at).getTime())
+                ? format(new Date(item.order_at), 'dd MMM, yy')
+                : 'Invalid date'}
+            </DrawerTitle>
+
+            {/* <DrawerTitle>{format(new Date(item.order_at), 'dd MMM, yy')}</DrawerTitle> */}
           </div>
           <DrawerDescription>Full details for the selected order</DrawerDescription>
         </DrawerHeader>
@@ -440,7 +456,11 @@ export function TableCellViewer({ item }: { item: z.infer<typeof schema> }) {
             </div>
             <div className="flex flex-row gap-3">
               <Label>Order Date:</Label>{' '}
-              {format(new Date(item.order_at), 'dd MMM, yyyy') || 'N/A'}
+              {item.order_at && !isNaN(new Date(item.order_at).getTime())
+                ? format(new Date(item.order_at), 'dd MMM, yyyy')
+                : 'N/A'}
+
+              {/* {format(new Date(item.order_at), 'dd MMM, yyyy') || 'N/A'} */}
             </div>
             <div className="flex flex-row gap-3">
               <Label>Status:</Label> {item.status || 'N/A'}
@@ -568,7 +588,18 @@ export const columns: ColumnDef<z.infer<typeof schema>>[] = [
   {
     accessorKey: 'order_at',
     header: 'Ordered At',
-    cell: ({ row }) => <div>{format(new Date(row.original.order_at), 'dd MMM, yy')}</div>,
+    // cell: ({ row }) => <div>{format(new Date(row.original.order_at), 'dd MMM, yy')}</div>,
+    cell: ({ row }) => {
+      const orderAt = row.original.order_at;
+      const date = new Date(orderAt);
+
+      return (
+        <div>
+          {orderAt && !isNaN(date.getTime()) ? format(date, 'dd MMM, yy') : 'N/A'}
+        </div>
+      );
+    },
+
   },
   {
     id: 'actions',
@@ -808,7 +839,13 @@ export function DataTable({ data }: { data: z.infer<typeof schema>[] }) {
                       <TableCellViewer item={row} />
                     </CardTitle>
                     <p className="text-sm font-medium">
-                      {format(new Date(row.order_at), 'dd MMM, yyyy')}
+                      {row.order_at && !isNaN(new Date(row.order_at).getTime()) ? (
+                        format(new Date(row.order_at), 'dd MMM, yyyy')
+                      ) : (
+                        'Invalid date'
+                      )}
+
+                      {/* {format(new Date(row.order_at), 'dd MMM, yyyy')} */}
                     </p>
                   </div>
                   <div className="flex items-center gap-4">
