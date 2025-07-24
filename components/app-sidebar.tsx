@@ -25,11 +25,11 @@ import {
 import { useAppSelector } from '@/hooks/useAppSelector'
 
 const navMain = [
-  {
-    title: 'Dashboard',
-    url: '/dashboard',
-    icon: IconDashboard,
-  },
+  // {
+  //   title: 'Dashboard',
+  //   url: '/dashboard',
+  //   icon: IconDashboard,
+  // },
   {
     title: 'Parcel',
     url: '/parcel',
@@ -58,11 +58,11 @@ const navMain = [
 ]
 
 const navMainNonBusinessOwner = [
-  {
-    title: 'Dashboard',
-    url: '/dashboard',
-    icon: IconDashboard,
-  },
+  // {
+  //   title: 'Dashboard',
+  //   url: '/dashboard',
+  //   icon: IconDashboard,
+  // },
   {
     title: 'Parcel',
     url: '/parcel',
@@ -76,11 +76,11 @@ const navMainNonBusinessOwner = [
 ]
 
 const navAdmin = [
-  {
-    title: 'Dashboard',
-    url: '/admin/dashboard',
-    icon: IconDashboard,
-  },
+  // {
+  //   title: 'Dashboard',
+  //   url: '/admin/dashboard',
+  //   icon: IconDashboard,
+  // },
   {
     title: 'Parcel',
     url: '/admin/parcel-service',
@@ -104,11 +104,11 @@ const navAdmin = [
 ]
 
 const navDel = [
-  {
-    title: 'Dashboard',
-    url: '/dashboard',
-    icon: IconDashboard,
-  },
+  // {
+  //   title: 'Dashboard',
+  //   url: '/dashboard',
+  //   icon: IconDashboard,
+  // },
   {
     title: 'Product List',
     url: '/list-product',
@@ -170,8 +170,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               className="data-[slot=sidebar-menu-button]:!p-1.5"
             >
               <div>
-                <IconInnerShadowTop className="!size-5" />
-                <span className="text-base font-semibold">Acme Inc.</span>
+                {/* <IconInnerShadowTop className="!size-5" /> */}
+                <span className="text-base font-semibold">Mateng Delivery</span>
               </div>
             </SidebarMenuButton>
           </SidebarMenuItem>

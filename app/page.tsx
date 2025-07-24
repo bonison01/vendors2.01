@@ -24,7 +24,7 @@ export default function Home() {
       const role = atob(encodedRole);
 
       if (role === 'Vendor') {
-        router.push('/dashboard');
+        router.push('/parcel');
       } else if (role === 'Admin') {
         router.push('/admin/dashboard');
       } else {

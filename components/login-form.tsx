@@ -58,7 +58,7 @@ export function LoginForm({
       if (data.role === "Admin") {
         router.push("/admin/dashboard");
       } else {
-        router.push("/dashboard");
+        router.push("/parcel");
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
