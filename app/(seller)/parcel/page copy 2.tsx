@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAppSelector } from "@/hooks/useAppSelector";
 import {
   ColumnFiltersState,
@@ -59,7 +59,7 @@ import {
 import * as XLSX from 'xlsx';
 
 export default function DeliveryRecordsPage() {
-  const [records, setRecords] = useState<EnhancedDeliveryRecord[]>([]); // records in ascending order (oldest->newest)
+  const [records, setRecords] = useState<EnhancedDeliveryRecord[]>([]);
   const [totalBalance, setTotalBalance] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -96,21 +96,12 @@ export default function DeliveryRecordsPage() {
             throw new Error(data.error || 'Failed to fetch delivery records');
           }
         } else {
-          // compute running balance (balanceCalculation sorts oldest->newest)
-          const enhancedRecords = balanceCalculation(data.deliveryRecords || []);
+          const enhancedRecords = balanceCalculation(data.deliveryRecords);
           setRecords(enhancedRecords);
-
-          // total balance = latest running balance (last record after ascending sort)
-          if (enhancedRecords.length > 0) {
-            setTotalBalance(enhancedRecords[enhancedRecords.length - 1].runningBalance ?? 0);
-          } else {
-            setTotalBalance(0);
-          }
-
+          // sum of TSB from DB
+          // setTotalBalance(enhancedRecords.reduce((sum, record) => sum + (record.tsb || 0), 0));
+          
           setError(null);
-
-          // DEBUG lines you can temporarily enable if values still look wrong:
-          // console.table(enhancedRecords.map(r => ({ order_id: r.order_id, date: r.date, tsb: r.tsb, calculatedTsb: r.calculatedTsb, runningBalance: r.runningBalance })));
         }
       } catch (err: any) {
         setError(err.message);
@@ -122,17 +113,10 @@ export default function DeliveryRecordsPage() {
     fetchDeliveryRecords();
   }, [vendor_id]);
 
-  // ---- displayRecords: we compute runningBalance on ascending array (records),
-  // but often we want to display newest-first. Reverse here for UI only.
-  const displayRecords = useMemo(() => {
-    // latest-first for UI. If you prefer oldest-first in UI, remove .reverse()
-    return [...records].reverse();
-  }, [records]);
-
-  // Filter records (applies to displayRecords so UI filter/pagination matches what user sees)
-  const filteredRecords = displayRecords.filter((record) =>
+  // Filter records for card view and export
+  const filteredRecords = records.filter((record) =>
     Object.values(record).some((value) =>
-      String(value ?? '').toLowerCase().includes(globalFilter.toLowerCase())
+      String(value || '').toLowerCase().includes(globalFilter.toLowerCase())
     )
   );
 
@@ -142,27 +126,33 @@ export default function DeliveryRecordsPage() {
     (cardPageIndex + 1) * cardPageSize
   );
 
+  // Toggle card expansion
   const toggleCard = (order_id: string) => {
     setExpandedCards((prev) => {
       const newSet = new Set(prev);
-      newSet.has(order_id) ? newSet.delete(order_id) : newSet.add(order_id);
+      if (newSet.has(order_id)) {
+        newSet.delete(order_id);
+      } else {
+        newSet.add(order_id);
+      }
       return newSet;
     });
   };
 
-  // Table uses displayRecords so the rendered order matches UI
+  // Table setup for large screens
   const table = useReactTable({
-    data: displayRecords,
+    data: records,
     columns,
     onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
-    globalFilterFn: (row, _columnId, filterValue) =>
-      Object.values(row.original).some((value) =>
-        String(value ?? '').toLowerCase().includes(filterValue.toLowerCase())
-      ),
+    globalFilterFn: (row, _columnId, filterValue) => {
+      return Object.values(row.original).some((value) =>
+        String(value || '').toLowerCase().includes(filterValue.toLowerCase())
+      );
+    },
     state: {
       columnFilters,
       columnVisibility,
@@ -170,7 +160,7 @@ export default function DeliveryRecordsPage() {
     },
   });
 
-  // Export handler (keeps runningBalance values from computed records)
+  // Handle export
   const handleExport = () => {
     let start: Date;
     let end: Date = addDays(new Date(), 1);
@@ -231,14 +221,16 @@ export default function DeliveryRecordsPage() {
       mode: record.mode || '-',
       pb: record.pb || '-',
       dc: record.dc || '-',
-      pb_amt: record.pb_amt ?? '-',
-      dc_amt: record.dc_amt ?? '-',
-      tsb: record.tsb ?? '-',
+      pb_amt: record.pb_amt || '-',
+      dc_amt: record.dc_amt || '-',
+      tsb: record.tsb || '-',
       cid: record.cid || '-',
       status: record.status || '-',
       note: record.note || '-',
       vendor_id: record.vendor_id || '-',
-      runningBalance: record.runningBalance ?? '-',
+      runningBalance: record.runningBalance,
+
+
     }));
 
     const worksheet = XLSX.utils.json_to_sheet(exportData);
@@ -258,13 +250,13 @@ export default function DeliveryRecordsPage() {
               <CardContent className="flex flex-col gap-2">
                 <CardTitle>Total Balance</CardTitle>
                 <p className={`text-3xl font-bold ${totalBalance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  ₹{(totalBalance ?? 0).toFixed(2)}
+                  ₹{totalBalance.toFixed(2)}
                 </p>
               </CardContent>
             </Card>
           </div>
 
-          {/* Search / Export / Columns */}
+          {/* Search, Export, Column Toggle */}
           <div className="flex items-center gap-4 py-4">
             <Input
               placeholder="Search..."
@@ -282,53 +274,55 @@ export default function DeliveryRecordsPage() {
                   <DialogTitle>Export Delivery Records</DialogTitle>
                 </DialogHeader>
                 <div className="flex flex-col space-y-4">
-                  {/* ... same select inputs ... */}
-                  {/* <Button onClick={handleExport} className="text-white ml-auto">Export</Button> */}
-                  <div className="flex flex-col space-y-4">
-  <Label htmlFor="range-select">Select Date Range</Label>
-  <Select
-    value={selectedRange}
-    onValueChange={(value) => setSelectedRange(value)}
-  >
-    <SelectTrigger className="w-full" id="range-select">
-      <SelectValue placeholder="Select range" />
-    </SelectTrigger>
-    <SelectContent>
-      <SelectItem value="today">Today</SelectItem>
-      <SelectItem value="thisWeek">This Week</SelectItem>
-      <SelectItem value="thisMonth">This Month</SelectItem>
-      <SelectItem value="last3Months">Last 3 Months</SelectItem>
-      <SelectItem value="last6Months">Last 6 Months</SelectItem>
-      <SelectItem value="oneYear">Last 1 Year</SelectItem>
-      <SelectItem value="custom">Custom</SelectItem>
-    </SelectContent>
-  </Select>
-
-  {selectedRange === 'custom' && (
-    <div className="flex flex-col gap-2">
-      <Label htmlFor="start-date">Start Date</Label>
-      <Input
-        id="start-date"
-        type="date"
-        value={customStartDate}
-        onChange={(e) => setCustomStartDate(e.target.value)}
-      />
-
-      <Label htmlFor="end-date">End Date</Label>
-      <Input
-        id="end-date"
-        type="date"
-        value={customEndDate}
-        onChange={(e) => setCustomEndDate(e.target.value)}
-      />
-    </div>
-  )}
-
-  <Button onClick={handleExport} className="text-white ml-auto">
-    Export
-  </Button>
-</div>
-
+                  <div className='grid gap-3'>
+                    <Label htmlFor="dateRange">Select Date Range</Label>
+                    <Select
+                      value={selectedRange}
+                      onValueChange={(value) => {
+                        setSelectedRange(value);
+                        if (value !== 'custom') {
+                          setCustomStartDate('');
+                          setCustomEndDate('');
+                        }
+                      }}
+                    >
+                      <SelectTrigger id="dateRange">
+                        <SelectValue placeholder="Select range" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="today">Today</SelectItem>
+                        <SelectItem value="thisWeek">This Week</SelectItem>
+                        <SelectItem value="thisMonth">This Month</SelectItem>
+                        <SelectItem value="last3Months">Last 3 Months</SelectItem>
+                        <SelectItem value="last6Months">Last 6 Months</SelectItem>
+                        <SelectItem value="oneYear">One Year</SelectItem>
+                        <SelectItem value="custom">Custom Range</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {selectedRange === 'custom' && (
+                    <div className="space-y-4">
+                      <div className='grid gap-3'>
+                        <Label htmlFor="customStartDate">Start Date</Label>
+                        <Input
+                          type="date"
+                          id="customStartDate"
+                          value={customStartDate}
+                          onChange={(e) => setCustomStartDate(e.target.value)}
+                        />
+                      </div>
+                      <div className='grid gap-3'>
+                        <Label htmlFor="customEndDate">End Date</Label>
+                        <Input
+                          type="date"
+                          id="customEndDate"
+                          value={customEndDate}
+                          onChange={(e) => setCustomEndDate(e.target.value)}
+                        />
+                      </div>
+                    </div>
+                  )}
+                  <Button onClick={handleExport} className='text-white ml-auto'>Export</Button>
                 </div>
               </DialogContent>
             </Dialog>
@@ -341,35 +335,37 @@ export default function DeliveryRecordsPage() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  {table
-                    .getAllColumns()
-                    .filter((column) => column.getCanHide())
-                    .map((column) => (
-                      <DropdownMenuCheckboxItem
-                        key={column.id}
-                        className="capitalize"
-                        checked={column.getIsVisible()}
-                        onCheckedChange={(value) => column.toggleVisibility(!!value)}
-                      >
-                        {column.id}
-                      </DropdownMenuCheckboxItem>
-                    ))}
+                  {table.getAllColumns().filter((c) => c.getCanHide()).map((column) => (
+                    <DropdownMenuCheckboxItem
+                      key={column.id}
+                      className="capitalize"
+                      checked={column.getIsVisible()}
+                      onCheckedChange={(value) => column.toggleVisibility(!!value)}
+                    >
+                      {column.id}
+                    </DropdownMenuCheckboxItem>
+                  ))}
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
           </div>
 
-          {/* Loader / Error */}
+          {/* Loading / Error */}
           {loading && (
             <div className="flex justify-center items-center h-64">
               <Loader2 className="h-8 w-8 animate-spin" />
             </div>
           )}
-          {error && <div className="text-gray-500 text-center p-4">{error}</div>}
+          {error && (
+            <div className="text-gray-500 text-center p-4">
+              {error}
+            </div>
+          )}
 
-          {/* Card + Table */}
+          {/* Card + Table views */}
           {!loading && !error && (
             <>
+              {/* Mobile cards */}
               <div className="lg:hidden space-y-4">
                 {paginatedRecords.length ? (
                   paginatedRecords.map((record) => {
@@ -384,30 +380,62 @@ export default function DeliveryRecordsPage() {
                             <CardTitle className="text-base">
                               {record.date ? format(new Date(record.date), 'dd MMM, yyyy') : '-'}
                             </CardTitle>
-                            <p className="text-xs text-gray-500">{record.description}</p>
                           </div>
                           <div className="flex items-center gap-4 min-w-fit ">
                             <div className="text-right">
-                              <p className="text-xs font-medium">TSB: ₹{(record.calculatedTsb ?? 0).toFixed(2)}</p>
-                              <p className="text-xs font-medium">Balance: ₹{(record.runningBalance ?? 0).toFixed(2)}</p>
+                              {/* <p className="text-xs font-medium">TSB: ₹{record.tsb.toFixed(2)}</p> */}
+                              <p className="text-xs font-medium">
+  TSB: ₹{(record.calculatedTsb ?? 0).toFixed(2)}
+</p>
+
+                              <p className="text-xs font-medium">Balance: ₹{record.runningBalance.toFixed(2)}</p>
                             </div>
                             {isExpanded ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
                           </div>
                         </CardHeader>
                         {isExpanded && (
                           <CardContent>
-                            {/* ... details (same as you had) ... */}
+                            <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                <p className="text-xs font-medium">Order ID</p>
+                                <p className="text-xs">{record.order_id}</p>
+                              </div>
+                              <div>
+                                <p className="text-xs font-medium">Mode</p>
+                                <p className="text-xs">{record.mode || '-'}</p>
+                              </div>
+                              <div>
+                                <p className="text-xs font-medium">Product Bill</p>
+                                <p className="text-xs">{record.pb_amt}</p>
+                              </div>
+                              <div>
+                                <p className="text-xs font-medium">Delivery Amount</p>
+                                <p className="text-xs">{record.dc_amt}</p>
+                              </div>
+                              <div>
+                                <p className="text-xs font-medium">Status</p>
+                                <Badge variant={record.status === 'Delivered' ? 'default' : 'secondary'}>
+                                  {record.status || '-'}
+                                </Badge>
+                              </div>
+                              <div>
+                                <p className="text-xs font-medium">Notes</p>
+                                <p className="text-xs">{record.note || '-'}</p>
+                              </div>
+                            </div>
                           </CardContent>
                         )}
                       </Card>
                     );
                   })
                 ) : (
-                  <Card><CardContent className="text-center py-6">No results.</CardContent></Card>
+                  <Card>
+                    <CardContent className="text-center py-6">No results.</CardContent>
+                  </Card>
                 )}
               </div>
 
-              {/* desktop table */}
+              {/* Desktop table */}
               <div className="hidden lg:block">
                 <Card>
                   <CardContent>
@@ -417,7 +445,9 @@ export default function DeliveryRecordsPage() {
                           <TableRow key={headerGroup.id}>
                             {headerGroup.headers.map((header) => (
                               <TableHead key={header.id}>
-                                {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+                                {header.isPlaceholder
+                                  ? null
+                                  : flexRender(header.column.columnDef.header, header.getContext())}
                               </TableHead>
                             ))}
                           </TableRow>
@@ -436,7 +466,9 @@ export default function DeliveryRecordsPage() {
                           ))
                         ) : (
                           <TableRow>
-                            <TableCell colSpan={columns.length} className="h-24 text-center">No results.</TableCell>
+                            <TableCell colSpan={columns.length} className="h-24 text-center">
+                              No results.
+                            </TableCell>
                           </TableRow>
                         )}
                       </TableBody>
@@ -445,91 +477,90 @@ export default function DeliveryRecordsPage() {
                 </Card>
               </div>
 
-              {/* Pagination (unchanged) */}
+              {/* Pagination */}
               <div className="flex items-center justify-between px-4 mt-3">
-                              <div className="text-muted-foreground hidden flex-1 text-sm lg:flex">
-                                {filteredRecords.length} record(s) found.
-                              </div>
-                              <div className="flex w-full items-center gap-8 lg:w-fit">
-                                <div className="items-center gap-2 flex">
-                                  <Label htmlFor="rows-per-page" className="text-sm font-medium hidden sm:flex">
-                                    Records per page
-                                  </Label>
-                                  <Select
-                                    value={`${table.getState().pagination.pageSize}`}
-                                    onValueChange={(value) => {
-                                      table.setPageSize(Number(value));
-                                      setCardPageSize(Number(value));
-                                    }}
-                                  >
-                                    <SelectTrigger size="sm" className="w-20" id="rows-per-page">
-                                      <SelectValue placeholder={table.getState().pagination.pageSize} />
-                                    </SelectTrigger>
-                                    <SelectContent side="top">
-                                      {[10, 15, 20, 30, 40, 50].map((size) => (
-                                        <SelectItem key={size} value={`${size}`}>
-                                          {size}
-                                        </SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
-                                </div>
-                                <div className="flex w-fit items-center justify-center text-sm font-medium">
-                                  Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
-                                </div>
-                                <div className="ml-auto flex items-center gap-2">
-                                  <Button
-                                    variant="outline"
-                                    className="hidden h-8 w-8 p-0 lg:flex"
-                                    onClick={() => {
-                                      table.setPageIndex(0);
-                                      setCardPageIndex(0);
-                                    }}
-                                    disabled={!table.getCanPreviousPage()}
-                                  >
-                                    <span className="sr-only">Go to first page</span>
-                                    <IconChevronsLeft className="h-4 w-4" />
-                                  </Button>
-                                  <Button
-                                    variant="outline"
-                                    className="h-8 w-8 p-0"
-                                    onClick={() => {
-                                      table.previousPage();
-                                      setCardPageIndex((prev) => Math.max(prev - 1, 0));
-                                    }}
-                                    disabled={!table.getCanPreviousPage()}
-                                  >
-                                    <span className="sr-only">Go to previous page</span>
-                                    <IconChevronLeft className="h-4 w-4" />
-                                  </Button>
-                                  <Button
-                                    variant="outline"
-                                    className="h-8 w-8 p-0"
-                                    onClick={() => {
-                                      table.nextPage();
-                                      setCardPageIndex((prev) => Math.min(prev + 1, cardPageCount - 1));
-                                    }}
-                                    disabled={!table.getCanNextPage()}
-                                  >
-                                    <span className="sr-only">Go to next page</span>
-                                    <IconChevronRight className="h-4 w-4" />
-                                  </Button>
-                                  <Button
-                                    variant="outline"
-                                    className="hidden h-8 w-8 p-0 lg:flex"
-                                    onClick={() => {
-                                      table.setPageIndex(table.getPageCount() - 1);
-                                      setCardPageIndex(cardPageCount - 1);
-                                    }}
-                                    disabled={!table.getCanNextPage()}
-                                  >
-                                    <span className="sr-only">Go to last page</span>
-                                    <IconChevronsRight className="h-4 w-4" />
-                                  </Button>
-                                </div>
-                              </div>
-                            </div>
-              {/* ... your pagination code unchanged ... */}
+                <div className="text-muted-foreground hidden flex-1 text-sm lg:flex">
+                  {filteredRecords.length} record(s) found.
+                </div>
+                <div className="flex w-full items-center gap-8 lg:w-fit">
+                  <div className="items-center gap-2 flex">
+                    <Label htmlFor="rows-per-page" className="text-sm font-medium hidden sm:flex">
+                      Records per page
+                    </Label>
+                    <Select
+                      value={`${table.getState().pagination.pageSize}`}
+                      onValueChange={(value) => {
+                        table.setPageSize(Number(value));
+                        setCardPageSize(Number(value));
+                      }}
+                    >
+                      <SelectTrigger size="sm" className="w-20" id="rows-per-page">
+                        <SelectValue placeholder={table.getState().pagination.pageSize} />
+                      </SelectTrigger>
+                      <SelectContent side="top">
+                        {[10, 15, 20, 30, 40, 50].map((size) => (
+                          <SelectItem key={size} value={`${size}`}>
+                            {size}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex w-fit items-center justify-center text-sm font-medium">
+                    Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
+                  </div>
+                  <div className="ml-auto flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      className="hidden h-8 w-8 p-0 lg:flex"
+                      onClick={() => {
+                        table.setPageIndex(0);
+                        setCardPageIndex(0);
+                      }}
+                      disabled={!table.getCanPreviousPage()}
+                    >
+                      <span className="sr-only">Go to first page</span>
+                      <IconChevronsLeft className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="h-8 w-8 p-0"
+                      onClick={() => {
+                        table.previousPage();
+                        setCardPageIndex((prev) => Math.max(prev - 1, 0));
+                      }}
+                      disabled={!table.getCanPreviousPage()}
+                    >
+                      <span className="sr-only">Go to previous page</span>
+                      <IconChevronLeft className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="h-8 w-8 p-0"
+                      onClick={() => {
+                        table.nextPage();
+                        setCardPageIndex((prev) => Math.min(prev + 1, cardPageCount - 1));
+                      }}
+                      disabled={!table.getCanNextPage()}
+                    >
+                      <span className="sr-only">Go to next page</span>
+                      <IconChevronRight className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="hidden h-8 w-8 p-0 lg:flex"
+                      onClick={() => {
+                        table.setPageIndex(table.getPageCount() - 1);
+                        setCardPageIndex(cardPageCount - 1);
+                      }}
+                      disabled={!table.getCanNextPage()}
+                    >
+                      <span className="sr-only">Go to last page</span>
+                      <IconChevronsRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
             </>
           )}
         </div>

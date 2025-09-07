@@ -283,52 +283,7 @@ export default function DeliveryRecordsPage() {
                 </DialogHeader>
                 <div className="flex flex-col space-y-4">
                   {/* ... same select inputs ... */}
-                  {/* <Button onClick={handleExport} className="text-white ml-auto">Export</Button> */}
-                  <div className="flex flex-col space-y-4">
-  <Label htmlFor="range-select">Select Date Range</Label>
-  <Select
-    value={selectedRange}
-    onValueChange={(value) => setSelectedRange(value)}
-  >
-    <SelectTrigger className="w-full" id="range-select">
-      <SelectValue placeholder="Select range" />
-    </SelectTrigger>
-    <SelectContent>
-      <SelectItem value="today">Today</SelectItem>
-      <SelectItem value="thisWeek">This Week</SelectItem>
-      <SelectItem value="thisMonth">This Month</SelectItem>
-      <SelectItem value="last3Months">Last 3 Months</SelectItem>
-      <SelectItem value="last6Months">Last 6 Months</SelectItem>
-      <SelectItem value="oneYear">Last 1 Year</SelectItem>
-      <SelectItem value="custom">Custom</SelectItem>
-    </SelectContent>
-  </Select>
-
-  {selectedRange === 'custom' && (
-    <div className="flex flex-col gap-2">
-      <Label htmlFor="start-date">Start Date</Label>
-      <Input
-        id="start-date"
-        type="date"
-        value={customStartDate}
-        onChange={(e) => setCustomStartDate(e.target.value)}
-      />
-
-      <Label htmlFor="end-date">End Date</Label>
-      <Input
-        id="end-date"
-        type="date"
-        value={customEndDate}
-        onChange={(e) => setCustomEndDate(e.target.value)}
-      />
-    </div>
-  )}
-
-  <Button onClick={handleExport} className="text-white ml-auto">
-    Export
-  </Button>
-</div>
-
+                  <Button onClick={handleExport} className="text-white ml-auto">Export</Button>
                 </div>
               </DialogContent>
             </Dialog>
@@ -446,89 +401,6 @@ export default function DeliveryRecordsPage() {
               </div>
 
               {/* Pagination (unchanged) */}
-              <div className="flex items-center justify-between px-4 mt-3">
-                              <div className="text-muted-foreground hidden flex-1 text-sm lg:flex">
-                                {filteredRecords.length} record(s) found.
-                              </div>
-                              <div className="flex w-full items-center gap-8 lg:w-fit">
-                                <div className="items-center gap-2 flex">
-                                  <Label htmlFor="rows-per-page" className="text-sm font-medium hidden sm:flex">
-                                    Records per page
-                                  </Label>
-                                  <Select
-                                    value={`${table.getState().pagination.pageSize}`}
-                                    onValueChange={(value) => {
-                                      table.setPageSize(Number(value));
-                                      setCardPageSize(Number(value));
-                                    }}
-                                  >
-                                    <SelectTrigger size="sm" className="w-20" id="rows-per-page">
-                                      <SelectValue placeholder={table.getState().pagination.pageSize} />
-                                    </SelectTrigger>
-                                    <SelectContent side="top">
-                                      {[10, 15, 20, 30, 40, 50].map((size) => (
-                                        <SelectItem key={size} value={`${size}`}>
-                                          {size}
-                                        </SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
-                                </div>
-                                <div className="flex w-fit items-center justify-center text-sm font-medium">
-                                  Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
-                                </div>
-                                <div className="ml-auto flex items-center gap-2">
-                                  <Button
-                                    variant="outline"
-                                    className="hidden h-8 w-8 p-0 lg:flex"
-                                    onClick={() => {
-                                      table.setPageIndex(0);
-                                      setCardPageIndex(0);
-                                    }}
-                                    disabled={!table.getCanPreviousPage()}
-                                  >
-                                    <span className="sr-only">Go to first page</span>
-                                    <IconChevronsLeft className="h-4 w-4" />
-                                  </Button>
-                                  <Button
-                                    variant="outline"
-                                    className="h-8 w-8 p-0"
-                                    onClick={() => {
-                                      table.previousPage();
-                                      setCardPageIndex((prev) => Math.max(prev - 1, 0));
-                                    }}
-                                    disabled={!table.getCanPreviousPage()}
-                                  >
-                                    <span className="sr-only">Go to previous page</span>
-                                    <IconChevronLeft className="h-4 w-4" />
-                                  </Button>
-                                  <Button
-                                    variant="outline"
-                                    className="h-8 w-8 p-0"
-                                    onClick={() => {
-                                      table.nextPage();
-                                      setCardPageIndex((prev) => Math.min(prev + 1, cardPageCount - 1));
-                                    }}
-                                    disabled={!table.getCanNextPage()}
-                                  >
-                                    <span className="sr-only">Go to next page</span>
-                                    <IconChevronRight className="h-4 w-4" />
-                                  </Button>
-                                  <Button
-                                    variant="outline"
-                                    className="hidden h-8 w-8 p-0 lg:flex"
-                                    onClick={() => {
-                                      table.setPageIndex(table.getPageCount() - 1);
-                                      setCardPageIndex(cardPageCount - 1);
-                                    }}
-                                    disabled={!table.getCanNextPage()}
-                                  >
-                                    <span className="sr-only">Go to last page</span>
-                                    <IconChevronsRight className="h-4 w-4" />
-                                  </Button>
-                                </div>
-                              </div>
-                            </div>
               {/* ... your pagination code unchanged ... */}
             </>
           )}
