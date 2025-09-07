@@ -3,7 +3,7 @@ import { ArrowUpDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { EnhancedDeliveryRecord } from '@/types/delivery-record';
-import { format } from 'date-fns'
+import { format } from 'date-fns';
 
 export const columns: ColumnDef<EnhancedDeliveryRecord>[] = [
   {
@@ -36,9 +36,21 @@ export const columns: ColumnDef<EnhancedDeliveryRecord>[] = [
     cell: ({ row }) => <div>{row.getValue('order_id')}</div>,
   },
   {
-    accessorKey: 'description',
+    id: 'description',
     header: 'Description',
-    cell: ({ row }) => <div>{row.getValue('description')}</div>,
+    cell: ({ row }) => {
+      const name = row.original.name || '-';
+      const address = row.original.address || '-';
+      const mobile = row.original.mobile || '-';
+
+      return (
+        <div className="space-y-1">
+          <div className="font-medium">{name}</div>
+          <div className="text-sm text-gray-500">{address}</div>
+          <div className="text-sm text-gray-500">{mobile}</div>
+        </div>
+      );
+    },
   },
   {
     accessorKey: 'mode',
@@ -46,24 +58,36 @@ export const columns: ColumnDef<EnhancedDeliveryRecord>[] = [
     cell: ({ row }) => <div>{row.getValue('mode') || '-'}</div>,
   },
   {
-    accessorKey: 'productBill',
+    accessorKey: 'pb_amt',
     header: 'Product Bill',
-    cell: ({ row }) => <div>{row.getValue('productBill')}</div>,
+    cell: ({ row }) => {
+      const value = row.getValue('pb_amt') as number | null;
+      return <div>₹{value?.toFixed(2) ?? '-'}</div>;
+    },
   },
   {
-    accessorKey: 'deliveryAmt',
+    accessorKey: 'dc_amt',
     header: 'Delivery Amt',
-    cell: ({ row }) => <div>{row.getValue('deliveryAmt')}</div>,
+    cell: ({ row }) => {
+      const value = row.getValue('dc_amt') as number | null;
+      return <div>₹{value?.toFixed(2) ?? '-'}</div>;
+    },
   },
   {
     accessorKey: 'calculatedTsb',
     header: 'TSB',
-    cell: ({ row }) => <div>{row.getValue('calculatedTsb')}</div>,
+    cell: ({ row }) => {
+      const value = row.getValue('calculatedTsb') as number | null;
+      return <div>₹{value?.toFixed(2) ?? '-'}</div>;
+    },
   },
   {
     accessorKey: 'runningBalance',
     header: 'Balance',
-    cell: ({ row }) => <div>₹{(row.getValue('runningBalance') as number).toFixed(2)}</div>,
+    cell: ({ row }) => {
+      const value = row.getValue('runningBalance') as number | null;
+      return <div>₹{value?.toFixed(2) ?? '-'}</div>;
+    },
   },
   {
     accessorKey: 'status',

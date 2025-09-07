@@ -277,7 +277,7 @@ export default function DeliveryRecordsPage() {
                               </div>
                               <div>
                                 <p className="text-xs font-medium">Delivery Amount</p>
-                                <p className="text-xs">{record.deliveryAmt}</p>
+                                <p className="text-xs">{record.dc_amt}</p>
                               </div>
                               <div>
                                 <p className="text-xs font-medium">Status</p>
