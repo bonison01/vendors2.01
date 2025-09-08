@@ -489,3 +489,26 @@ model delivery_rec {
 
   @@schema("public")
 }
+model delivery_rec_pending {
+  date        DateTime? @db.Date
+  name        String?
+  address     String?
+  mobile      String?
+  vendor      String?
+  team        String?
+  mode        String?
+  pb          String?
+  dc          String?
+  pb_amt      Int?
+  dc_amt      Int?
+  tsb         Int?
+  cid         Int?
+  status      String?
+  note        String?
+  order_id    String    @unique
+  vendor_id   Int?
+  delivery_id Int?
+  id          Int       @id @default(autoincrement())
+
+  @@schema("public")
+}

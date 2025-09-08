@@ -79,50 +79,46 @@ export default function DeliveryRecordsPage() {
   const vendor_id = useAppSelector((state) => state.user.user?.vendor_id);
 
   useEffect(() => {
-    const fetchDeliveryRecords = async () => {
-      if (!vendor_id) {
-        setError('Vendor ID not found. Please log in.');
-        setLoading(false);
-        return;
-      }
+  const fetchDeliveryRecords = async () => {
+    if (!vendor_id) {
+      setError('Vendor ID not found. Please log in.');
+      setLoading(false);
+      return;
+    }
 
-      try {
-        setLoading(true);
-        const response = await fetch(`/api/parcel/getById?vendor_id=${vendor_id}`);
-        const data = await response.json();
+    try {
+      setLoading(true);
+      const response = await fetch(`/api/parcel/getPendingById?vendor_id=${vendor_id}`);
+      const data = await response.json();
 
-        if (!response.ok) {
-          if (data.message === 'No delivery records found for this vendor_id') {
-            setError('No delivery records found');
-          } else {
-            throw new Error(data.error || 'Failed to fetch delivery records');
-          }
+      if (!response.ok) {
+        if (data.message === 'No pending delivery records found for this vendor_id') {
+          setError('No pending delivery records found');
         } else {
-          // compute running balance (balanceCalculation sorts oldest->newest)
-          const enhancedRecords = balanceCalculation(data.deliveryRecords || []);
-          setRecords(enhancedRecords);
-
-          // total balance = latest running balance (last record after ascending sort)
-          if (enhancedRecords.length > 0) {
-            setTotalBalance(enhancedRecords[enhancedRecords.length - 1].runningBalance ?? 0);
-          } else {
-            setTotalBalance(0);
-          }
-
-          setError(null);
-
-          // DEBUG lines you can temporarily enable if values still look wrong:
-          // console.table(enhancedRecords.map(r => ({ order_id: r.order_id, date: r.date, tsb: r.tsb, calculatedTsb: r.calculatedTsb, runningBalance: r.runningBalance })));
+          throw new Error(data.error || 'Failed to fetch pending delivery records');
         }
-      } catch (err: any) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
+      } else {
+        const enhancedRecords = balanceCalculation(data.pendingRecords || []);
+        setRecords(enhancedRecords);
 
-    fetchDeliveryRecords();
-  }, [vendor_id]);
+        if (enhancedRecords.length > 0) {
+          setTotalBalance(enhancedRecords[enhancedRecords.length - 1].runningBalance ?? 0);
+        } else {
+          setTotalBalance(0);
+        }
+
+        setError(null);
+      }
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchDeliveryRecords();
+}, [vendor_id]);
+
 
   // ---- displayRecords: we compute runningBalance on ascending array (records),
   // but often we want to display newest-first. Reverse here for UI only.
@@ -265,12 +261,12 @@ export default function DeliveryRecordsPage() {
               </CardContent>
             </Card>
             <Button 
-              variant="outline" 
-              onClick={() => router.push('/pending')}
-              className="h-10 self-start"
-            >
-              Go to Pending Orders
-            </Button>
+                          variant="outline" 
+                          onClick={() => router.push('/parcel')}
+                          className="h-10 self-start"
+                        >
+                          Go to Delivered Orders
+                        </Button>
           </div>
 
           {/* Search / Export / Columns */}
