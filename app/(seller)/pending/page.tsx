@@ -377,196 +377,211 @@ export default function DeliveryRecordsPage() {
 
           {/* Card + Table */}
           {!loading && !error && (
-            <>
-              <div className="lg:hidden space-y-4">
-                {paginatedRecords.length ? (
-                  paginatedRecords.map((record) => {
-                    const isExpanded = expandedCards.has(record.order_id);
-                    return (
-                      <Card key={record.order_id} className="w-full">
-                        <CardHeader
-                          className="flex flex-row items-center justify-between cursor-pointer px-4"
-                          onClick={() => toggleCard(record.order_id)}
-                        >
-                          <div className="flex flex-col">
-                            <CardTitle className="text-base">
-                              {record.date ? format(new Date(record.date), 'dd MMM, yyyy') : '-'}
-                            </CardTitle>
-                            <p className="text-xs text-gray-500">{record.description}</p>
-                          </div>
-                          <div className="flex items-center gap-4 min-w-fit ">
-                            <div className="text-right">
-                              <p className="text-xs font-medium">TSB: ₹{(record.calculatedTsb ?? 0).toFixed(2)}</p>
-                              <p className="text-xs font-medium">Balance: ₹{(record.runningBalance ?? 0).toFixed(2)}</p>
-                            </div>
-                            {isExpanded ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
-                          </div>
-                        </CardHeader>
-                        {isExpanded && (
-                          <CardContent>
-                            <div className="grid grid-cols-2 gap-4">
-                              <div>
-                                <p className="text-xs font-medium">Order ID</p>
-                                <p className="text-xs">{record.order_id}</p>
-                              </div>
-                              <div>
-                                <p className="text-xs font-medium">Mode</p>
-                                <p className="text-xs">{record.mode || '-'}</p>
-                              </div>
-                              <div>
-                                <p className="text-xs font-medium">Product Bill</p>
-                                <p className="text-xs">{record.productBill}</p>
-                              </div>
-                              <div>
-                                <p className="text-xs font-medium">Delivery Amount</p>
-                                <p className="text-xs">{record.deliveryAmt}</p>
-                              </div>
-                              <div>
-                                <p className="text-xs font-medium">Status</p>
-                                <Badge variant={record.status === 'Delivered' ? 'default' : 'secondary'}>
-                                  {record.status || '-'}
-                                </Badge>
-                              </div>
-                              <div>
-                                <p className="text-xs font-medium">Notes</p>
-                                <p className="text-xs">{record.note || '-'}</p>
-                              </div>
-                            </div>
-                          </CardContent>
-                        )}
-                      </Card>
-                    );
-                  })
-                ) : (
-                  <Card><CardContent className="text-center py-6">No results.</CardContent></Card>
-                )}
-              </div>
-
-              {/* desktop table */}
-              <div className="hidden lg:block">
-                <Card>
-                  <CardContent>
-                    <Table>
-                      <TableHeader>
-                        {table.getHeaderGroups().map((headerGroup) => (
-                          <TableRow key={headerGroup.id}>
-                            {headerGroup.headers.map((header) => (
-                              <TableHead key={header.id}>
-                                {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
-                              </TableHead>
-                            ))}
-                          </TableRow>
-                        ))}
-                      </TableHeader>
-                      <TableBody>
-                        {table.getRowModel().rows?.length ? (
-                          table.getRowModel().rows.map((row) => (
-                            <TableRow key={row.id}>
-                              {row.getVisibleCells().map((cell) => (
-                                <TableCell key={cell.id} className="max-w-60 whitespace-normal break-words">
-                                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                                </TableCell>
-                              ))}
-                            </TableRow>
-                          ))
-                        ) : (
-                          <TableRow>
-                            <TableCell colSpan={columns.length} className="h-24 text-center">No results.</TableCell>
-                          </TableRow>
-                        )}
-                      </TableBody>
-                    </Table>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Pagination (unchanged) */}
-              <div className="flex items-center justify-between px-4 mt-3">
-                              <div className="text-muted-foreground hidden flex-1 text-sm lg:flex">
-                                {filteredRecords.length} record(s) found.
-                              </div>
-                              <div className="flex w-full items-center gap-8 lg:w-fit">
-                                <div className="items-center gap-2 flex">
-                                  <Label htmlFor="rows-per-page" className="text-sm font-medium hidden sm:flex">
-                                    Records per page
-                                  </Label>
-                                  <Select
-                                    value={`${table.getState().pagination.pageSize}`}
-                                    onValueChange={(value) => {
-                                      table.setPageSize(Number(value));
-                                      setCardPageSize(Number(value));
-                                    }}
+                      <>
+                        <div className="lg:hidden space-y-4">
+                          {paginatedRecords.length ? (
+                            paginatedRecords.map((record) => {
+                              const isExpanded = expandedCards.has(record.order_id);
+                              return (
+                                <Card key={record.order_id} className="w-full">
+                                  <CardHeader
+                                    // className="flex flex-row items-center justify-between cursor-pointer px-4"
+                                    className="flex flex-row justify-between cursor-pointer px-4"
+                                    onClick={() => toggleCard(record.order_id)}
                                   >
-                                    <SelectTrigger size="sm" className="w-20" id="rows-per-page">
-                                      <SelectValue placeholder={table.getState().pagination.pageSize} />
-                                    </SelectTrigger>
-                                    <SelectContent side="top">
-                                      {[10, 15, 20, 30, 40, 50].map((size) => (
-                                        <SelectItem key={size} value={`${size}`}>
-                                          {size}
-                                        </SelectItem>
+                                    <div className="flex flex-col">
+                                      <CardTitle className="text-base">
+                                        {record.date ? format(new Date(record.date), 'dd MMM, yyyy') : '-'}<br />
+                                        <span style={{ fontSize: '0.75rem', color: '#6B7280' }}>
+                                          ({record.address || '-'})
+                                        </span>
+                                      </CardTitle>
+                                      <p className="text-xs text-gray-500">{record.description}</p>
+                                    </div>
+                                    
+                                    <div className="flex items-center gap-4 min-w-fit ">
+                                      <div className="text-right">
+                                        <p className="text-xs font-medium">TSB: ₹{(record.calculatedTsb ?? 0).toFixed(2)}</p>
+                                        <p className="text-xs font-medium">Balance: ₹{(record.runningBalance ?? 0).toFixed(2)}</p>
+                                      </div>
+                                      {isExpanded ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
+                                    </div>
+                                  </CardHeader>
+                                  {isExpanded && (
+                                    <CardContent>
+                                      {/* ... details (same as you had) ... */}
+                                      <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                          <p className="text-xs font-medium">Order ID</p>
+                                          <p className="text-xs">{record.order_id}</p>
+                                        </div>
+                                        <div>
+                                          <p className="text-xs font-medium">Description</p>
+                                          <p className="text-xs">
+                                            {/* {`${record.name || '-'}, ${record.address || '-'}, ${record.mobile || '-'}`} */}
+                                            {`${record.name || '-'} - ${record.address || '-'} (${record.mobile || '-'})`}
+          
+                                          </p>
+                                        </div>
+          
+                                        <div>
+                                          <p className="text-xs font-medium">Mode</p>
+                                          <p className="text-xs">{record.mode || '-'}</p>
+                                        </div>
+                                        <div>
+                                          <p className="text-xs font-medium">Product Bill</p>
+                                          <p className="text-xs">{record.pb_amt}</p>
+                                        </div>
+                                        <div>
+                                          <p className="text-xs font-medium">Delivery Amount</p>
+                                          <p className="text-xs">{record.dc_amt}</p>
+                                        </div>
+                                        <div>
+                                          <p className="text-xs font-medium">Status</p>
+                                          <Badge variant={record.status === 'Delivered' ? 'default' : 'secondary'}>
+                                            {record.status || '-'}
+                                          </Badge>
+                                        </div>
+                                        <div>
+                                          <p className="text-xs font-medium">Notes</p>
+                                          <p className="text-xs">{record.note || '-'}</p>
+                                        </div>
+                                      </div>
+                                    </CardContent>
+                                  )}
+                                </Card>
+                              );
+                            })
+                          ) : (
+                            <Card><CardContent className="text-center py-6">No results.</CardContent></Card>
+                          )}
+                        </div>
+          
+                        {/* desktop table */}
+                        <div className="hidden lg:block">
+                          <Card>
+                            <CardContent>
+                              <Table>
+                                <TableHeader>
+                                  {table.getHeaderGroups().map((headerGroup) => (
+                                    <TableRow key={headerGroup.id}>
+                                      {headerGroup.headers.map((header) => (
+                                        <TableHead key={header.id}>
+                                          {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+                                        </TableHead>
                                       ))}
-                                    </SelectContent>
-                                  </Select>
-                                </div>
-                                <div className="flex w-fit items-center justify-center text-sm font-medium">
-                                  Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
-                                </div>
-                                <div className="ml-auto flex items-center gap-2">
-                                  <Button
-                                    variant="outline"
-                                    className="hidden h-8 w-8 p-0 lg:flex"
-                                    onClick={() => {
-                                      table.setPageIndex(0);
-                                      setCardPageIndex(0);
-                                    }}
-                                    disabled={!table.getCanPreviousPage()}
-                                  >
-                                    <span className="sr-only">Go to first page</span>
-                                    <IconChevronsLeft className="h-4 w-4" />
-                                  </Button>
-                                  <Button
-                                    variant="outline"
-                                    className="h-8 w-8 p-0"
-                                    onClick={() => {
-                                      table.previousPage();
-                                      setCardPageIndex((prev) => Math.max(prev - 1, 0));
-                                    }}
-                                    disabled={!table.getCanPreviousPage()}
-                                  >
-                                    <span className="sr-only">Go to previous page</span>
-                                    <IconChevronLeft className="h-4 w-4" />
-                                  </Button>
-                                  <Button
-                                    variant="outline"
-                                    className="h-8 w-8 p-0"
-                                    onClick={() => {
-                                      table.nextPage();
-                                      setCardPageIndex((prev) => Math.min(prev + 1, cardPageCount - 1));
-                                    }}
-                                    disabled={!table.getCanNextPage()}
-                                  >
-                                    <span className="sr-only">Go to next page</span>
-                                    <IconChevronRight className="h-4 w-4" />
-                                  </Button>
-                                  <Button
-                                    variant="outline"
-                                    className="hidden h-8 w-8 p-0 lg:flex"
-                                    onClick={() => {
-                                      table.setPageIndex(table.getPageCount() - 1);
-                                      setCardPageIndex(cardPageCount - 1);
-                                    }}
-                                    disabled={!table.getCanNextPage()}
-                                  >
-                                    <span className="sr-only">Go to last page</span>
-                                    <IconChevronsRight className="h-4 w-4" />
-                                  </Button>
-                                </div>
-                              </div>
-                            </div>
-              {/* ... your pagination code unchanged ... */}
-            </>
-          )}
+                                    </TableRow>
+                                  ))}
+                                </TableHeader>
+                                <TableBody>
+                                  {table.getRowModel().rows?.length ? (
+                                    table.getRowModel().rows.map((row) => (
+                                      <TableRow key={row.id}>
+                                        {row.getVisibleCells().map((cell) => (
+                                          <TableCell key={cell.id} className="max-w-60 whitespace-normal break-words">
+                                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                          </TableCell>
+                                        ))}
+                                      </TableRow>
+                                    ))
+                                  ) : (
+                                    <TableRow>
+                                      <TableCell colSpan={columns.length} className="h-24 text-center">No results.</TableCell>
+                                    </TableRow>
+                                  )}
+                                </TableBody>
+                              </Table>
+                            </CardContent>
+                          </Card>
+                        </div>
+          
+                        {/* Pagination (unchanged) */}
+                        <div className="flex items-center justify-between px-4 mt-3">
+                                        <div className="text-muted-foreground hidden flex-1 text-sm lg:flex">
+                                          {filteredRecords.length} record(s) found.
+                                        </div>
+                                        <div className="flex w-full items-center gap-8 lg:w-fit">
+                                          <div className="items-center gap-2 flex">
+                                            <Label htmlFor="rows-per-page" className="text-sm font-medium hidden sm:flex">
+                                              Records per page
+                                            </Label>
+                                            <Select
+                                              value={`${table.getState().pagination.pageSize}`}
+                                              onValueChange={(value) => {
+                                                table.setPageSize(Number(value));
+                                                setCardPageSize(Number(value));
+                                              }}
+                                            >
+                                              <SelectTrigger size="sm" className="w-20" id="rows-per-page">
+                                                <SelectValue placeholder={table.getState().pagination.pageSize} />
+                                              </SelectTrigger>
+                                              <SelectContent side="top">
+                                                {[10, 15, 20, 30, 40, 50].map((size) => (
+                                                  <SelectItem key={size} value={`${size}`}>
+                                                    {size}
+                                                  </SelectItem>
+                                                ))}
+                                              </SelectContent>
+                                            </Select>
+                                          </div>
+                                          <div className="flex w-fit items-center justify-center text-sm font-medium">
+                                            Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
+                                          </div>
+                                          <div className="ml-auto flex items-center gap-2">
+                                            <Button
+                                              variant="outline"
+                                              className="hidden h-8 w-8 p-0 lg:flex"
+                                              onClick={() => {
+                                                table.setPageIndex(0);
+                                                setCardPageIndex(0);
+                                              }}
+                                              disabled={!table.getCanPreviousPage()}
+                                            >
+                                              <span className="sr-only">Go to first page</span>
+                                              <IconChevronsLeft className="h-4 w-4" />
+                                            </Button>
+                                            <Button
+                                              variant="outline"
+                                              className="h-8 w-8 p-0"
+                                              onClick={() => {
+                                                table.previousPage();
+                                                setCardPageIndex((prev) => Math.max(prev - 1, 0));
+                                              }}
+                                              disabled={!table.getCanPreviousPage()}
+                                            >
+                                              <span className="sr-only">Go to previous page</span>
+                                              <IconChevronLeft className="h-4 w-4" />
+                                            </Button>
+                                            <Button
+                                              variant="outline"
+                                              className="h-8 w-8 p-0"
+                                              onClick={() => {
+                                                table.nextPage();
+                                                setCardPageIndex((prev) => Math.min(prev + 1, cardPageCount - 1));
+                                              }}
+                                              disabled={!table.getCanNextPage()}
+                                            >
+                                              <span className="sr-only">Go to next page</span>
+                                              <IconChevronRight className="h-4 w-4" />
+                                            </Button>
+                                            <Button
+                                              variant="outline"
+                                              className="hidden h-8 w-8 p-0 lg:flex"
+                                              onClick={() => {
+                                                table.setPageIndex(table.getPageCount() - 1);
+                                                setCardPageIndex(cardPageCount - 1);
+                                              }}
+                                              disabled={!table.getCanNextPage()}
+                                            >
+                                              <span className="sr-only">Go to last page</span>
+                                              <IconChevronsRight className="h-4 w-4" />
+                                            </Button>
+                                          </div>
+                                        </div>
+                                      </div>
+                        {/* ... your pagination code unchanged ... */}
+                      </>
+                    )}
         </div>
       </ScrollArea>
     </div>
