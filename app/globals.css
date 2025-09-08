@@ -49,9 +49,9 @@
   line-height: 1.5;
   font-weight: 400;
 
-  color-scheme: light dark; /* Keep this for dark mode toggle */
-  color: rgba(0, 0, 0, 0.87); /* Changed: Text color for light background */
-  background-color: #ffffff; /* Changed: Main background to white */
+  color-scheme: light dark;
+  color: rgba(0, 0, 0, 0.87);
+  background-color: #ffffff;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -59,31 +59,30 @@
   -moz-osx-font-smoothing: grayscale;
   --radius: 0.625rem;
 
-  /* Adjust light mode colors for a white background */
-  --background: oklch(1 0 0); /* White */
-  --foreground: oklch(0.14 0.014 270); /* Dark grey/black for text */
-  --card: oklch(1 0 0); /* White */
-  --card-foreground: oklch(0.14 0.014 270); /* Dark grey/black */
-  --popover: oklch(1 0 0); /* White */
-  --popover-foreground: oklch(0.14 0.014 270); /* Dark grey/black */
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.14 0.014 270);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.14 0.014 270);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.14 0.014 270);
 
-  --primary: oklch(0.63 0.25 142); /* Keep primary color as is, adjust foreground if needed for contrast */
-  --primary-foreground: oklch(0.97 0.04 356); /* This is a very light color, good for a dark primary */
+  --primary: oklch(0.63 0.25 142);
+  --primary-foreground: oklch(0.97 0.04 356);
 
-  --secondary: oklch(0.95 0.01 240); /* Light secondary for a light background */
-  --secondary-foreground: oklch(0.23 0.02 240); /* Dark text for secondary */
+  --secondary: oklch(0.95 0.01 240);
+  --secondary-foreground: oklch(0.23 0.02 240);
 
-  --muted: oklch(0.95 0.01 240); /* Light muted for light background */
-  --muted-foreground: oklch(0.58 0.01 240); /* Medium grey for muted text */
+  --muted: oklch(0.95 0.01 240);
+  --muted-foreground: oklch(0.58 0.01 240);
 
-  --accent: oklch(0.95 0.01 240); /* Light accent for light background */
-  --accent-foreground: oklch(0.23 0.02 240); /* Dark text for accent */
+  --accent: oklch(0.95 0.01 240);
+  --accent-foreground: oklch(0.23 0.02 240);
 
   --destructive: oklch(0.65 0.23 20);
   --destructive-foreground: oklch(0.98 0 0);
 
-  --border: oklch(0.89 0.02 240); /* Lighter border for light background */
-  --input: oklch(0.89 0.02 240); /* Lighter input for light background */
+  --border: oklch(0.89 0.02 240);
+  --input: oklch(0.89 0.02 240);
   --ring: oklch(0.63 0.25 142);
 
   --radius: 0.5rem;
@@ -94,17 +93,16 @@
   --chart-4: oklch(0.741 0.168 81.2);
   --chart-5: oklch(0.721 0.188 51.3);
 
-  --sidebar: oklch(0.985 0 0); /* Near white for sidebar */
-  --sidebar-foreground: oklch(0.145 0 0); /* Dark text for sidebar */
-  --sidebar-primary: oklch(0.205 0 0); /* Dark primary for sidebar */
-  --sidebar-primary-foreground: oklch(0.985 0 0); /* White text for sidebar primary */
-  --sidebar-accent: oklch(0.97 0 0); /* Light accent for sidebar */
-  --sidebar-accent-foreground: oklch(0.205 0 0); /* Dark text for sidebar accent */
-  --sidebar-border: oklch(0.922 0 0); /* Light border for sidebar */
-  --sidebar-ring: oklch(0.708 0 0); /* Medium grey ring for sidebar */
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
 }
 
-/* Dark mode remains mostly the same, as it defines colors for a dark theme */
 .dark {
   --background: oklch(0.07 0.03 20);
   --foreground: oklch(0.95 0 0);
@@ -222,93 +220,84 @@
 }
 
 .custom-bg {
-  /* Changed: Background for light mode to white with a subtle light gradient */
-  background: rgb(255, 255, 255);
   background: radial-gradient(125% 125% at 50% -5%, #e0e0e0 -10%, #ffffff 77%);
 }
 
 .bg-overlay {
-    height: 100%;
-    width: 100%;
-    position: absolute;
-    /* Changed: Overlay for light mode */
-    background: radial-gradient(
-        125% 125% at 50% -5%,
-        rgba(224, 224, 224, 0.384) -35%, /* Lighter shade for subtle overlay */
-        rgba(255, 255, 255, 0.6) 65%,    /* White with opacity */
-        rgba(255, 255, 255, 1) 85%       /* Solid white */
-    );
-    /* z-index: 1; */
-    pointer-events: none;
-    /* mix-blend-mode: overlay; // Might need to change this if it makes things too dark on a white background, consider `multiply` or `darken` or remove for lighter effects */
+  height: 100%;
+  width: 100%;
+  position: absolute;
+  background: radial-gradient(
+    125% 125% at 50% -5%,
+    rgba(224, 224, 224, 0.384) -35%,
+    rgba(255, 255, 255, 0.6) 65%,
+    rgba(255, 255, 255, 1) 85%
+  );
+  pointer-events: none;
 }
 
 .line {
-    position: absolute;
-    width: 1px;
-    height: 100%;
-    top: 0;
-    left: 50%;
-    background: rgba(0, 0, 0, 0); /* Changed: line background for a subtle effect on white */
-    overflow: hidden;
-  }
+  position: absolute;
+  width: 1px;
+  height: 100%;
+  top: 0;
+  left: 50%;
+  background: rgba(0, 0, 0, 0);
+  overflow: hidden;
+}
 
-  .line::after {
-    content: "";
-    display: block;
-    position: absolute;
-    height: 15vh;
-    width: 100%;
+.line::after {
+  content: "";
+  display: block;
+  position: absolute;
+  height: 15vh;
+  width: 100%;
+  top: -50%;
+  left: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0) 0%,
+    #7e7e7e66 75%,
+    #00000066 100%
+  );
+  animation: drop 5s 0s infinite;
+  animation-fill-mode: forwards;
+  animation-timing-function: cubic-bezier(0.4, 0.67, 0.26);
+}
+
+.line:nth-child(1) {
+  margin-left: -30%;
+}
+.line:nth-child(1)::after {
+  animation-delay: 1.5s;
+}
+.line:nth-child(3) {
+  margin-left: 30%;
+}
+.line:nth-child(3)::after {
+  animation-delay: 1s;
+}
+.line:nth-child(2) {
+  margin-left: -10%;
+}
+.line:nth-child(2)::after {
+  animation-delay: 0.5s;
+}
+.line:nth-child(4) {
+  margin-left: 10%;
+}
+.line:nth-child(4)::after {
+  animation-delay: 2s;
+}
+
+@keyframes drop {
+  0% {
     top: -50%;
-    left: 0;
-    background: linear-gradient(
-      to bottom,
-      rgba(0, 0, 0, 0) 0%, /* Changed: transparent to dark for gradient on white */
-      #7e7e7e66 75%, /* Adjusted opacity for lighter effect */
-      #00000066 100% /* Adjusted for darker visible line on white */
-    );
-    animation: drop 5s 0s infinite;
-    animation-fill-mode: forwards;
-    animation-timing-function: cubic-bezier(0.4,0.67, 0.26 );
   }
-
-
-  .line:nth-child(1) {
-    margin-left: -30%;
+  100% {
+    top: 110%;
   }
-  .line:nth-child(1)::after {
-    animation-delay: 1.5s;
-  }
-  .line:nth-child(3) {
-    margin-left: 30%;
-  }
-  .line:nth-child(3)::after {
-    animation-delay: 1s;
-  }
-
-  .line:nth-child(2) {
-    margin-left: -10%;
-  }
-  .line:nth-child(2)::after {
-    animation-delay: 0.5s;
-  }
-
-  .line:nth-child(4) {
-    margin-left: 10%;
-  }
-  .line:nth-child(4)::after {
-    animation-delay: 2s;
-  }
-
-  @keyframes drop {
-    0% {
-      top: -50%;
-    }
-    100% {
-      top: 110%;
-    }
-  }
-
+}
 
 @keyframes fade-in {
   0% {
@@ -354,6 +343,14 @@
   transform-origin: left;
 }
 
-.poppins{
+.poppins {
   font-family: "Poppins", sans-serif;
+}
+
+/* ✅ Mobile Override: Background to black on small screens */
+@media (max-width: 640px) {
+  :root {
+    --background: oklch(0 0 0);     /* Black background */
+    --foreground: oklch(1 0 0);     /* White text */
+  }
 }

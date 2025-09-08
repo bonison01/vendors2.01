@@ -404,7 +404,34 @@ export default function DeliveryRecordsPage() {
                         </CardHeader>
                         {isExpanded && (
                           <CardContent>
-                            {/* ... details (same as you had) ... */}
+                            <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                <p className="text-xs font-medium">Order ID</p>
+                                <p className="text-xs">{record.order_id}</p>
+                              </div>
+                              <div>
+                                <p className="text-xs font-medium">Mode</p>
+                                <p className="text-xs">{record.mode || '-'}</p>
+                              </div>
+                              <div>
+                                <p className="text-xs font-medium">Product Bill</p>
+                                <p className="text-xs">{record.productBill}</p>
+                              </div>
+                              <div>
+                                <p className="text-xs font-medium">Delivery Amount</p>
+                                <p className="text-xs">{record.deliveryAmt}</p>
+                              </div>
+                              <div>
+                                <p className="text-xs font-medium">Status</p>
+                                <Badge variant={record.status === 'Delivered' ? 'default' : 'secondary'}>
+                                  {record.status || '-'}
+                                </Badge>
+                              </div>
+                              <div>
+                                <p className="text-xs font-medium">Notes</p>
+                                <p className="text-xs">{record.note || '-'}</p>
+                              </div>
+                            </div>
                           </CardContent>
                         )}
                       </Card>

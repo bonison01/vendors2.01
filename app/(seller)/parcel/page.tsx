@@ -390,15 +390,20 @@ export default function DeliveryRecordsPage() {
                     return (
                       <Card key={record.order_id} className="w-full">
                         <CardHeader
-                          className="flex flex-row items-center justify-between cursor-pointer px-4"
+                          // className="flex flex-row items-center justify-between cursor-pointer px-4"
+                          className="flex flex-row justify-between cursor-pointer px-4"
                           onClick={() => toggleCard(record.order_id)}
                         >
                           <div className="flex flex-col">
                             <CardTitle className="text-base">
-                              {record.date ? format(new Date(record.date), 'dd MMM, yyyy') : '-'}
+                              {record.date ? format(new Date(record.date), 'dd MMM, yyyy') : '-'}<br />
+                              <span style={{ fontSize: '0.75rem', color: '#6B7280' }}>
+                                ({record.address || '-'})
+                              </span>
                             </CardTitle>
                             <p className="text-xs text-gray-500">{record.description}</p>
                           </div>
+                          
                           <div className="flex items-center gap-4 min-w-fit ">
                             <div className="text-right">
                               <p className="text-xs font-medium">TSB: ₹{(record.calculatedTsb ?? 0).toFixed(2)}</p>
@@ -410,6 +415,43 @@ export default function DeliveryRecordsPage() {
                         {isExpanded && (
                           <CardContent>
                             {/* ... details (same as you had) ... */}
+                            <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                <p className="text-xs font-medium">Order ID</p>
+                                <p className="text-xs">{record.order_id}</p>
+                              </div>
+                              <div>
+                                <p className="text-xs font-medium">Description</p>
+                                <p className="text-xs">
+                                  {/* {`${record.name || '-'}, ${record.address || '-'}, ${record.mobile || '-'}`} */}
+                                  {`${record.name || '-'} - ${record.address || '-'} (${record.mobile || '-'})`}
+
+                                </p>
+                              </div>
+
+                              <div>
+                                <p className="text-xs font-medium">Mode</p>
+                                <p className="text-xs">{record.mode || '-'}</p>
+                              </div>
+                              <div>
+                                <p className="text-xs font-medium">Product Bill</p>
+                                <p className="text-xs">{record.pb_amt}</p>
+                              </div>
+                              <div>
+                                <p className="text-xs font-medium">Delivery Amount</p>
+                                <p className="text-xs">{record.dc_amt}</p>
+                              </div>
+                              <div>
+                                <p className="text-xs font-medium">Status</p>
+                                <Badge variant={record.status === 'Delivered' ? 'default' : 'secondary'}>
+                                  {record.status || '-'}
+                                </Badge>
+                              </div>
+                              <div>
+                                <p className="text-xs font-medium">Notes</p>
+                                <p className="text-xs">{record.note || '-'}</p>
+                              </div>
+                            </div>
                           </CardContent>
                         )}
                       </Card>
