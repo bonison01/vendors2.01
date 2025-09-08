@@ -264,10 +264,14 @@ export default function DeliveryRecordsPage() {
                 </p>
               </CardContent>
             </Card>
-            <Button 
+            
+          </div>
+          <div>
+          <Button 
               variant="outline" 
               onClick={() => router.push('/pending')}
-              className="h-10 self-start"
+              className="h-10 self-start text-white border-white hover:bg-red-600 hover:text-white hover:border-white transition-colors duration-300 shadow-sm hover:shadow-md font-bold text-lg"
+
             >
               Go to Pending Orders
             </Button>

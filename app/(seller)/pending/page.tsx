@@ -254,19 +254,22 @@ export default function DeliveryRecordsPage() {
           <div className="flex gap-4 mb-4">
             <Card className="w-80">
               <CardContent className="flex flex-col gap-2">
-                <CardTitle>Total Balance</CardTitle>
+                <CardTitle>Total Pending Balance</CardTitle>
                 <p className={`text-3xl font-bold ${totalBalance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                   ₹{(totalBalance ?? 0).toFixed(2)}
                 </p>
               </CardContent>
             </Card>
-            <Button 
-                          variant="outline" 
-                          onClick={() => router.push('/parcel')}
-                          className="h-10 self-start"
-                        >
-                          Go to Delivered Orders
-                        </Button>
+          </div>
+          <div>
+            <Button
+  variant="outline"
+  onClick={() => router.push('/parcel')}
+  className="h-10 self-start text-white border-white hover:bg-red-600 hover:text-white hover:border-white transition-colors duration-300 shadow-sm hover:shadow-md font-bold text-lg"
+
+>
+  Go to Delivered Orders
+</Button>
           </div>
 
           {/* Search / Export / Columns */}
