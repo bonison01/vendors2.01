@@ -92,7 +92,7 @@ export function LoginForm({
           />
         </div>
         <div className="grid gap-3 relative">
-          <div className="flex items-center">
+          {/* <div className="flex items-center">
             <Label htmlFor="password">Password</Label>
             <a
               href="#"
@@ -100,7 +100,7 @@ export function LoginForm({
             >
               Forgot your password?
             </a>
-          </div>
+          </div> */}
           <Input
             id="password"
             type={showPassword ? "text" : "password"}
@@ -125,7 +125,7 @@ export function LoginForm({
           {isLoading ? "Logging in..." : "Login"}
         </Button>
       </div>
-      <div className="text-center text-sm">
+      {/* <div className="text-center text-sm">
         Don't have an account?{" "}
         <Button
           variant="link"
@@ -139,7 +139,7 @@ export function LoginForm({
         >
           Sign up
         </Button>
-      </div>
+      </div> */}
     </form>
   );
 }
