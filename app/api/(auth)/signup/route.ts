@@ -17,18 +17,19 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const parsed = signupSchema.parse(body);
 
+    // Generate next vendor_id
     const lastUser = await prisma.users.findFirst({
-      where: { vendor_id: { not: null } }, // Exclude null vendor_id
+      where: { vendor_id: { not: null } },
       orderBy: { vendor_id: 'desc' },
       select: { vendor_id: true },
     });
-    const nextVendorId = lastUser && lastUser.vendor_id !== null ? lastUser.vendor_id + 1 : 1;
+    const nextVendorId = lastUser?.vendor_id ? lastUser.vendor_id + 1 : 1;
 
-    await prisma.users.create({
+    const user = await prisma.users.create({
       data: {
         name: parsed.name,
         email: parsed.email,
-        password: parsed.password,
+        password: parsed.password, // stored in plain text (⚠️)
         phone: parsed.phone,
         address: parsed.address,
         is_registered: false,
@@ -37,7 +38,23 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    return NextResponse.json({ message: 'User created successfully' }, { status: 201 });
+    // Create response and set cookie with user_id and email for auto-login
+    const response = NextResponse.json(
+      { message: 'User created successfully', vendor_id: user.vendor_id },
+      { status: 201 }
+    );
+
+    response.cookies.set(
+      'user',
+      JSON.stringify({ id: user.user_id, email: user.email }),
+      {
+        httpOnly: true,
+        path: '/',
+        maxAge: 60 * 60 * 24 * 7, // 7 days
+      }
+    );
+
+    return response;
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(

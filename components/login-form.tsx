@@ -54,10 +54,17 @@ export function LoginForm({
       // Dispatch user data to Redux store
       dispatch(setUser(data.user));
 
-      // Redirect based on role
+      // Fetch the bank_name
+      const bankName = data.user.bank_name;
+
+      // Redirect based on role and bank_name
       if (data.role === "Admin") {
         router.push("/admin/dashboard");
+      } else if (!bankName || bankName.trim() === "") {
+        // No bank_name, redirect to form
+        router.push("/form");
       } else {
+        // Has bank_name, redirect to parcel
         router.push("/parcel");
       }
     } catch (err) {
@@ -91,8 +98,7 @@ export function LoginForm({
             required
           />
         </div>
-        <div className="grid gap-3 relative">
-          {/* <div className="flex items-center">
+        <div className="flex items-center">
             <Label htmlFor="password">Password</Label>
             <a
               href="#"
@@ -100,7 +106,8 @@ export function LoginForm({
             >
               Forgot your password?
             </a>
-          </div> */}
+          </div>
+        <div className="grid gap-3 relative">
           <Input
             id="password"
             type={showPassword ? "text" : "password"}
@@ -125,7 +132,7 @@ export function LoginForm({
           {isLoading ? "Logging in..." : "Login"}
         </Button>
       </div>
-      {/* <div className="text-center text-sm">
+      <div className="text-center text-sm">
         Don't have an account?{" "}
         <Button
           variant="link"
@@ -139,7 +146,7 @@ export function LoginForm({
         >
           Sign up
         </Button>
-      </div> */}
+      </div>
     </form>
   );
 }

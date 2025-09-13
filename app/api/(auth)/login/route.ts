@@ -1,3 +1,4 @@
+// /app/api/login/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 import { z } from 'zod';
@@ -17,13 +18,14 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { email, password } = loginSchema.parse(body);
 
-    // Find user by email
+    // Find user by email, including bank_name in the selection
     const user = await prisma.users.findUnique({
       where: { email },
       select: {
         user_id: true,
         email: true,
         password: true,
+        bank_name: true, // Include the bank_name field
       },
     });
 
@@ -42,7 +44,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Determine role
+    // Determine role (this is hardcoded for now for simplicity)
     const role =
       email === 'justmatengservices@gmail.com' && password === 'Mateng@011'
         ? 'Admin'
@@ -51,7 +53,7 @@ export async function POST(request: NextRequest) {
     // Remove password from response
     const { password: _, ...userData } = user;
 
-    // Return user data with role
+    // Return user data with role and bank_name
     return NextResponse.json({
       message: 'Login successful',
       user: userData,

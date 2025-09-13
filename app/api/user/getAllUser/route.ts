@@ -27,6 +27,7 @@ export async function GET(request: NextRequest) {
         whatsapp: true,
         rating: true,
         vendor_id: true,
+        bank_name : true,
       },
     });
 
