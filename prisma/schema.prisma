@@ -72,6 +72,7 @@ model customers {
   dob             DateTime?       @db.Date
   delivery_orders delivery_orders[]
   order_rec       order_rec[]
+  vendor_id       Int? // Or Int?, depending on your data type
   ratings         ratings[]
 
   @@map("customers")

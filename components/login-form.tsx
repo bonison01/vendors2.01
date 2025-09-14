@@ -9,6 +9,16 @@ import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useDispatch } from "react-redux";
 import { setUser } from "@/lib/store/userSilce";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { toast } from "sonner"; // Assuming you are using a toast notification library
 
 export function LoginForm({
   className,
@@ -22,6 +32,14 @@ export function LoginForm({
   const router = useRouter();
   const dispatch = useDispatch();
   const searchParams = useSearchParams();
+
+  // New state for forgot password dialog
+  const [forgotPasswordEmail, setForgotPasswordEmail] = useState("");
+  const [forgotPasswordPhone, setForgotPasswordPhone] = useState("");
+  const [forgotPasswordVendorId, setForgotPasswordVendorId] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [forgotPasswordDialogOpen, setForgotPasswordDialogOpen] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
 
   const togglePasswordVisibility = () => {
     setShowPassword((prev) => !prev);
@@ -69,8 +87,44 @@ export function LoginForm({
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
+      toast.error(err instanceof Error ? err.message : "An error occurred");
     } finally {
       setIsLoading(false);
+    }
+  };
+  
+  const handleForgotPasswordSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsResetting(true);
+    
+    try {
+      const response = await fetch("/api/forgotPassword", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ 
+          email: forgotPasswordEmail,
+          phone: forgotPasswordPhone,
+          vendor_id: forgotPasswordVendorId,
+          newPassword: newPassword,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to reset password.");
+      }
+
+      // Handle success
+      toast.success(data.message);
+      setForgotPasswordDialogOpen(false); // Close the dialog
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "An error occurred";
+      toast.error(errorMessage);
+    } finally {
+      setIsResetting(false);
     }
   };
 
@@ -100,12 +154,69 @@ export function LoginForm({
         </div>
         <div className="flex items-center">
             <Label htmlFor="password">Password</Label>
-            <a
-              href="#"
-              className="ml-auto text-sm underline-offset-4 hover:underline"
-            >
-              Forgot your password?
-            </a>
+            <Dialog open={forgotPasswordDialogOpen} onOpenChange={setForgotPasswordDialogOpen}>
+              <DialogTrigger asChild>
+                <Button type="button" variant="link" className="ml-auto text-sm underline-offset-4 hover:underline p-0 h-auto">
+                  Forgot your password?
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                  <DialogTitle>Reset Password</DialogTitle>
+                  <DialogDescription>
+                    Enter your email, phone, and vendor ID to reset your password.
+                  </DialogDescription>
+                </DialogHeader>
+                <form onSubmit={handleForgotPasswordSubmit} className="grid gap-4 py-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="forgot-email">Email</Label>
+                    <Input
+                      id="forgot-email"
+                      placeholder="m@example.com"
+                      value={forgotPasswordEmail}
+                      onChange={(e) => setForgotPasswordEmail(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="forgot-phone">Phone</Label>
+                    <Input
+                      id="forgot-phone"
+                      placeholder="e.g., +15551234567"
+                      value={forgotPasswordPhone}
+                      onChange={(e) => setForgotPasswordPhone(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="forgot-vendorId">Vendor ID</Label>
+                    <Input
+                      id="forgot-vendorId"
+                      placeholder="e.g., VENDOR_12345"
+                      value={forgotPasswordVendorId}
+                      onChange={(e) => setForgotPasswordVendorId(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="forgot-newPassword">New Password</Label>
+                    <Input
+                      id="forgot-newPassword"
+                      type="password"
+                      placeholder="******"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <DialogFooter>
+                    <Button type="submit" disabled={isResetting}>
+                      {isResetting ? "Resetting..." : "Reset Password"}
+                    </Button>
+                  </DialogFooter>
+                </form>
+              </DialogContent>
+            </Dialog>
           </div>
         <div className="grid gap-3 relative">
           <Input
