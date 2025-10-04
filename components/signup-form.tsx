@@ -79,15 +79,18 @@ export function SignupForm({
       </div>
       <div className="grid gap-6">
         <div className="grid gap-3">
-          <Label htmlFor="name">Name</Label>
+          <Label htmlFor="name">Business Name</Label>
           <Input
             id="name"
             name="name"
-            placeholder="John Doe"
+            placeholder="John_Doe"
             value={formData.name}
             onChange={handleInputChange}
             required
+            pattern="^[a-zA-Z0-9_ ]+$"
+            title="Only letters, numbers, spaces, and underscores are allowed"
           />
+
         </div>
         <div className="grid gap-3">
           <Label htmlFor="email">Email</Label>
