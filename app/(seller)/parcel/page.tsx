@@ -267,15 +267,14 @@ export default function DeliveryRecordsPage() {
             
           </div>
           <div>
-          <Button 
-              variant="outline" 
-              onClick={() => router.push('/pending')}
-              className="h-10 self-start text-white border-white hover:bg-red-600 hover:text-white hover:border-white transition-colors duration-300 shadow-sm hover:shadow-md font-bold text-lg"
+  <Button 
+    onClick={() => router.push('/pending')}
+    className="h-10 self-start bg-white text-black border border-white hover:bg-red-600 hover:text-white hover:border-white transition-colors duration-300 shadow-sm hover:shadow-md font-bold text-lg"
+  >
+    Go to Pending & Out for Delivery Orders
+  </Button>
+</div>
 
-            >
-              Go to Pending Orders
-            </Button>
-          </div>
 
           {/* Search / Export / Columns */}
           <div className="flex items-center gap-4 py-4">
